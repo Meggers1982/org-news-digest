@@ -1,0 +1,65 @@
+name: Daily Org News Digest
+
+on:
+  schedule:
+    # Runs at 08:00 UTC every weekday (Mon–Fri)
+    # Adjust to taste — e.g. "0 8 * * *" for every day including weekends
+    - cron: "0 8 * * 1-5"
+
+  # Allow manual runs from the GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: >
+          Override lookback window in days (leave blank to use config value).
+          Use a larger number to catch up after a holiday gap.
+        required: false
+        default: ""
+
+jobs:
+  digest:
+    name: Fetch, generate, and email org news digest
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # Needed to commit digest files back to the repo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Override days_back in config (if dispatch input provided)
+        if: ${{ github.event.inputs.days_back != '' }}
+        run: |
+          python - <<'EOF'
+          import json, pathlib
+          p = pathlib.Path("config/digest_config.json")
+          cfg = json.loads(p.read_text())
+          cfg["days_back"] = int("${{ github.event.inputs.days_back }}")
+          p.write_text(json.dumps(cfg, indent=2))
+          print(f"days_back overridden to {cfg['days_back']}")
+          EOF
+
+      - name: Run digest pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        working-directory: scripts
+        run: python main.py
+
+      - name: Commit digest outputs
+        run: |
+          git config user.name  "org-news-digest-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add outputs/
+          git diff --cached --quiet || git commit -m "digest: $(date -u +%Y-%m-%d)"
+          git push

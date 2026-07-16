@@ -1,0 +1,177 @@
+{
+  "_comment": "Source list for the org-news-digest pipeline. Each entry is treated as an RSS/Atom feed.",
+  "_prnewswire_note": "PR Newswire search RSS pattern: https://www.prnewswire.com/rss/news-releases-list.rss?q=ENCODED+ORG+NAME",
+  "_businesswire_note": "Business Wire search RSS pattern: https://feed.businesswire.com/rss/home/?rss.x=1&q=ENCODED+ORG+NAME",
+  "_verified_note": "Set 'verified': false on feeds you haven't confirmed work yet. The pipeline will still attempt them and warn on failure.",
+
+  "sources": [
+
+    {
+      "_section": "── GOVERNMENT & POLICY ──────────────────────────────"
+    },
+    {
+      "_disabled": true,
+      "name": "AARP Press Room",
+      "org": "AARP",
+      "category": "Government & Policy",
+      "feed_url": "https://press.aarp.org/rss",
+      "verified": false,
+      "notes": "BROKEN: press.aarp.org/rss redirects to HTML, not a feed. AARP does not expose a working press release RSS. No alternative found. Monitor aarp.org/press/releases manually or find an email-to-RSS bridge."
+    },
+    {
+      "_disabled": true,
+      "name": "AARP on PR Newswire",
+      "org": "AARP",
+      "category": "Government & Policy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=aarp",
+      "verified": false,
+      "notes": "BROKEN for our purposes: PR Newswire keyword search for 'aarp' returns any release mentioning AARP (pet food, banking, real estate awards, etc.) — not AARP's own releases. All 20 items were junk and were dropped by Claude. Disabled until a cleaner source is found."
+    },
+    {
+      "_disabled": true,
+      "name": "National Institute on Aging (NIA)",
+      "org": "National Institute on Aging",
+      "category": "Government & Policy",
+      "feed_url": "https://www.nia.nih.gov/news/news-releases/feed",
+      "verified": false,
+      "notes": "BROKEN: NIA migrated to Drupal 11 and does not expose any RSS feeds. All standard feed paths return empty. No working alternative found. Content is active at nia.nih.gov/news/news-releases but not machine-readable."
+    },
+    {
+      "_disabled": true,
+      "name": "NIMH News",
+      "org": "National Institute of Mental Health",
+      "category": "Government & Policy",
+      "feed_url": "https://www.nimh.nih.gov/news/rss",
+      "verified": false,
+      "notes": "BROKEN: NIMH (Drupal 10) does not expose a working RSS feed. All tested paths return empty. Content is active at nimh.nih.gov/news but not machine-readable."
+    },
+    {
+      "_disabled": true,
+      "name": "Alzheimers.gov News",
+      "org": "Alzheimers.gov",
+      "category": "Government & Policy",
+      "feed_url": "https://www.alzheimers.gov/news/feed",
+      "verified": false,
+      "notes": "BROKEN: No RSS feed exists. News page is active at alzheimers.gov/news but no feed link in page source. Managed by NIA — content substantially overlaps with NIA news."
+    },
+    {
+      "name": "VA Press Releases",
+      "org": "VA Geriatrics & Extended Care",
+      "category": "Government & Policy",
+      "feed_url": "https://news.va.gov/category/news-releases/feed/",
+      "verified": true,
+      "notes": "Confirmed working. Returns application/rss+xml. Active with 12+ recent entries including suicide prevention report, dental care access, survivor benefits."
+    },
+    {
+      "name": "NLM / PubMed Updates",
+      "org": "NIH / NLM (PubMed)",
+      "category": "Government & Policy",
+      "feed_url": "https://www.nlm.nih.gov/rss/auto/PubMedNews.rss",
+      "verified": true,
+      "notes": "Official NLM Technical Bulletin RSS for PubMed news. Confirmed active."
+    },
+
+    {
+      "_section": "── INDUSTRY & ADVOCACY ──────────────────────────────"
+    },
+    {
+      "name": "Alzheimer's Association on PR Newswire",
+      "org": "Alzheimer's Association",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=alzheimer%27s+association",
+      "source_filter": ["Alzheimer's Association", "Alzheimers Association", "alz.org"],
+      "verified": true,
+      "notes": "Wire keyword search — source_filter ensures only genuine Alzheimer's Association releases pass."
+    },
+    {
+      "name": "LeadingAge News",
+      "org": "LeadingAge",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://leadingage.org/news/feed/",
+      "verified": true,
+      "notes": "Confirmed working. Returns application/rss+xml. Active with multiple posts per week — policy reactions, MedPAC reports, housing, hospice. Sample: 'PAC MA Coalition on OIG Reports' (June 16, 2026), 'MedPAC Releases Report on Alternative Hospice Payments' (June 16, 2026)."
+    },
+    {
+      "name": "LeadingAge on PR Newswire",
+      "org": "LeadingAge",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=leadingage",
+      "source_filter": ["LeadingAge"],
+      "verified": true,
+      "notes": "Confirmed PR Newswire org page at prnewswire.com/news/leadingage/. Dedup handles overlap with LeadingAge News feed."
+    },
+    {
+      "name": "AHCA/NCAL on PR Newswire",
+      "org": "AHCA / NCAL",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=american+health+care+association",
+      "source_filter": ["American Health Care Association", "AHCA/NCAL", "AHCA-NCAL"],
+      "verified": true,
+      "notes": "Confirmed active on PR Newswire 2025-2026."
+    },
+    {
+      "name": "NCOA on PR Newswire",
+      "org": "National Council on Aging",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=national+council+on+aging",
+      "source_filter": ["National Council on Aging", "NCOA"],
+      "verified": true,
+      "notes": "Confirmed dedicated PR Newswire page at prnewswire.com/news/national-council-on-aging/"
+    },
+    {
+      "name": "National Alliance for Caregiving on PR Newswire",
+      "org": "National Alliance for Caregiving",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=national+alliance+for+caregiving",
+      "source_filter": ["National Alliance for Caregiving"],
+      "verified": true,
+      "notes": "Confirmed active on PR Newswire 2024-2025."
+    },
+    {
+      "name": "Alliance for Aging Research on PR Newswire",
+      "org": "Alliance for Aging Research",
+      "category": "Industry & Advocacy",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss?q=alliance+for+aging+research",
+      "source_filter": ["Alliance for Aging Research"],
+      "verified": true,
+      "notes": "Confirmed active on PR Newswire 2025."
+    },
+
+    {
+      "_section": "── HEALTH POLICY & COST RESEARCH ───────────────────"
+    },
+    {
+      "name": "KFF Publications",
+      "org": "KFF (Kaiser Family Foundation)",
+      "category": "Health Policy & Cost Research",
+      "feed_url": "https://www.kff.org/feed/",
+      "verified": true,
+      "notes": "Confirmed working. Returns application/rss+xml. High-relevance content: Medicare, Medicaid, drug pricing, LTC policy, health coverage."
+    },
+    {
+      "name": "Commonwealth Fund",
+      "org": "The Commonwealth Fund",
+      "category": "Health Policy & Cost Research",
+      "feed_url": "https://www.commonwealthfund.org/feed/the-commonwealth-fund",
+      "verified": true,
+      "notes": "Confirmed from search result. Topic-based feeds also available at commonwealthfund.org/rss-feeds."
+    },
+    {
+      "name": "RAND Research (All Publications)",
+      "org": "RAND Corporation",
+      "category": "Health Policy & Cost Research",
+      "feed_url": "https://www.rand.org/pubs/new.xml",
+      "verified": true,
+      "notes": "Confirmed working. Returns valid XML. No aging-specific feed exists — this is all new RAND publications. Claude should filter for aging/LTC/Medicare relevant items. Previous URL (aging.xml) was broken."
+    },
+    {
+      "name": "CareScout / Genworth on Business Wire",
+      "org": "Genworth Cost of Care Survey",
+      "category": "Health Policy & Cost Research",
+      "feed_url": "https://feed.businesswire.com/rss/home/?rss.x=1&q=carescout",
+      "source_filter": ["CareScout", "Genworth"],
+      "verified": true,
+      "notes": "Annual Cost of Care Survey released on Business Wire each March. Now published under CareScout brand."
+    }
+  ]
+}
