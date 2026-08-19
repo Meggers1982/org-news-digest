@@ -142,13 +142,7 @@ def generate_digest(
     response = client.messages.create(
         model=model,
         max_tokens=12000,
-        system=[
-            {
-                "type": "text",
-                "text": SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
+        system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )
 
