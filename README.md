@@ -18,7 +18,8 @@ GitHub Actions (13:00 UTC daily)
        ├─ fetcher.py          RSS/Atom fetch, per-source caps, date cutoff, wire-feed org filter
        ├─ db.py               Neon Postgres: digest_runs (output) + seen_links (cross-run dedup)
        ├─ org_digest_generator.py     one Claude call → Markdown
-       └─ press_digest_generator.py   one Claude call → Markdown
+       ├─ press_digest_generator.py   one Claude call → Markdown
+       └─ trends_generator.py         one Claude call → Trends & Continuity + Feature Pitch
                                           │
                                           ▼
                               dashboard/ (Next.js on Vercel)
@@ -28,6 +29,15 @@ Each pass fetches its own sources, drops links seen within `dedup_days`, curates
 with its own Claude prompt, and writes the rendered Markdown to `digest_runs`.
 The two passes are isolated — a feed outage or API failure in one does not stop
 the other, and the job exits non-zero if either failed.
+
+After a digest is generated, `trends_generator.py` compares it against the most
+recent prior digest of the same type and looks across just this run's own items
+for a cross-item pattern worth pitching as a standalone feature. It writes two
+optional sections (`trends_raw`, `feature_pitch_raw` on the `digest_runs` row)
+and revises a running per-digest-type synthesis in `digest_memory` so later runs
+can draw on more than just the single most recent digest. A failure here never
+costs the digest itself — it's caught in `run_pipeline` and the digest is stored
+without those two sections.
 
 Because dedup is global across runs, **re-dispatching the workflow on a day that
 already ran produces a partial digest** covering only what is new since the last
@@ -40,9 +50,10 @@ rather than collapsing them to one.
 |---|---|
 | `scripts/main.py` | Entry point — runs both passes, owns pass isolation |
 | `scripts/fetcher.py` | Feed fetching and in-run dedup (20s socket timeout per request) |
-| `scripts/db.py` | Schema, `digest_runs` inserts, `seen_links` dedup and pruning |
+| `scripts/db.py` | Schema, `digest_runs` inserts, `seen_links` dedup and pruning, `digest_memory` reads/writes |
 | `scripts/claude_api.py` | Shared Claude call wrapper — retries 429/5xx, extracts text blocks, raises on refusal |
 | `scripts/*_digest_generator.py` | The two curation prompts |
+| `scripts/trends_generator.py` | Cross-run comparison + standalone feature-pitch synthesis, per digest type |
 | `config/digest_config.json` | Lookback, per-source caps, minimum item count, model |
 | `config/org_sources.json`, `config/press_sources.json` | Feed lists |
 | `preferences/press_preferences.md` | Freeform steer for the press pass |

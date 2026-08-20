@@ -14,7 +14,9 @@ One dynamic route. `app/page.tsx` is a Server Component that reads `?date=` and
   filter, so the full corpus never crosses the wire.
 - **Content** — `getRunsForDate(date)` returns every run stored for that date,
   newest first. Markdown is rendered to HTML in `DigestSection` (a Server
-  Component), keeping `react-markdown` out of the client bundle entirely.
+  Component), keeping `react-markdown` out of the client bundle entirely. When a
+  run has `trends_raw` and/or `feature_pitch_raw`, they render as callout
+  `.section-block`s below the main digest.
 - **Client** — `Dashboard.tsx` is a thin shell: the debounced search box, the
   date links, and the back-to-top button.
 
@@ -32,7 +34,8 @@ Pages are `force-dynamic` — Postgres is the source of truth and traffic is tin
 | `/api/docx?id=<run id>` | Downloads that run as a Word document |
 
 `.docx` export runs server-side (`lib/markdownToDocx.ts` + `docx`), so the
-library stays off the client.
+library stays off the client. It includes the run's `trends_raw` and
+`feature_pitch_raw` sections when present, matching what's shown on the page.
 
 ## Local development
 
@@ -61,12 +64,23 @@ npx vercel --prod
 Written by `scripts/db.py`; the dashboard only reads.
 
 ```sql
-digest_runs (id, run_date, digest_type, source_count, item_count, markdown, created_at)
-seen_links  (link, digest_type, first_seen)
+digest_runs   (id, run_date, digest_type, source_count, item_count, markdown,
+               trends_raw, feature_pitch_raw, created_at)
+seen_links    (link, digest_type, first_seen)
+digest_memory (digest_type, memory, updated_at)
 ```
 
 `item_count` is how many items were **fetched** for that run after dedup, not how
 many the curator kept — the UI labels it "items fetched" for that reason.
+
+`trends_raw` and `feature_pitch_raw` are written by `scripts/trends_generator.py`
+after the digest itself, comparing it against the prior digest of the same type
+and looking for a cross-item pattern worth pitching as a standalone feature. Both
+are nullable — older rows and rows where that step failed just render without
+those sections, no schema branching needed in the UI beyond a truthiness check.
+`digest_memory` holds one running synthesis row per digest type that
+`trends_generator.py` reads and revises each run; the dashboard never reads it
+directly.
 
 > Neon returns `date` / `timestamptz` columns as JS `Date` objects, not strings.
 > Every query here casts them (`run_date::text`, `to_char(created_at …)`), and new

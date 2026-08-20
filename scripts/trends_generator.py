@@ -87,7 +87,6 @@ def _parse_named_section(text: str, heading: str) -> str:
 
 
 def generate_trends_and_pitch(
-    conn,
     digest_type: str,
     digest_label: str,
     digest_context: str,
@@ -98,14 +97,23 @@ def generate_trends_and_pitch(
     """Return (trends_raw, feature_pitch_raw) markdown for the two visible
     sections. As a side effect, revises and persists this digest type's memory
     row in Postgres so future runs can draw on the full history, not just the
-    single most recent digest."""
+    single most recent digest.
 
-    previous_markdown = db.get_previous_digest_markdown(conn, digest_type)
+    Opens its own short-lived connections rather than sharing the caller's —
+    the Claude call here can run long, and a connection held open across it
+    risks the pooler closing it, which would otherwise take the caller's
+    connection (and the digest insert relying on it) down too."""
+
+    read_conn = db.get_connection()
+    try:
+        previous_markdown = db.get_previous_digest_markdown(read_conn, digest_type)
+        existing_memory = db.get_digest_memory(read_conn, digest_type)
+    finally:
+        read_conn.close()
+
     previous_block = (
         previous_markdown if previous_markdown else "(none — this is the first digest of this type)"
     )
-
-    existing_memory = db.get_digest_memory(conn, digest_type)
     memory_block = existing_memory if existing_memory else "(none yet — this is the first run)"
 
     client = anthropic.Anthropic(api_key=api_key)
@@ -127,7 +135,11 @@ def generate_trends_and_pitch(
 
     memory_match = re.search(r"```digest_memory\s*(.*?)```", body, re.DOTALL)
     if memory_match:
-        db.save_digest_memory(conn, digest_type, memory_match.group(1).strip())
+        write_conn = db.get_connection()
+        try:
+            db.save_digest_memory(write_conn, digest_type, memory_match.group(1).strip())
+        finally:
+            write_conn.close()
         body = body[: memory_match.start()].rstrip()
 
     trends_raw = _parse_named_section(body, "Trends & Continuity")

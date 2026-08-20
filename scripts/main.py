@@ -99,7 +99,6 @@ def run_pipeline(
     try:
         digest_label, digest_context = DIGEST_CONTEXT[digest_type]
         trends_raw, feature_pitch_raw = generate_trends_and_pitch(
-            conn,
             digest_type=digest_type,
             digest_label=digest_label,
             digest_context=digest_context,
