@@ -18,7 +18,7 @@ function sql() {
 
 export async function getLatestRun(digestType: DigestType): Promise<DigestRun | null> {
   const rows = await sql()`
-    select id, run_date, digest_type, source_count, item_count, markdown, created_at
+    select id, run_date::text as run_date, digest_type, source_count, item_count, markdown, created_at::text as created_at
     from digest_runs
     where digest_type = ${digestType}
     order by run_date desc, created_at desc
@@ -29,7 +29,7 @@ export async function getLatestRun(digestType: DigestType): Promise<DigestRun | 
 
 export async function getAllRunDates(limit = 60): Promise<string[]> {
   const rows = await sql()`
-    select distinct run_date
+    select distinct run_date::text as run_date
     from digest_runs
     order by run_date desc
     limit ${limit}
@@ -39,7 +39,7 @@ export async function getAllRunDates(limit = 60): Promise<string[]> {
 
 export async function getRunsForDate(runDate: string): Promise<DigestRun[]> {
   const rows = await sql()`
-    select id, run_date, digest_type, source_count, item_count, markdown, created_at
+    select id, run_date::text as run_date, digest_type, source_count, item_count, markdown, created_at::text as created_at
     from digest_runs
     where run_date = ${runDate}
     order by digest_type
