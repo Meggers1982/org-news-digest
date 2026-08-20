@@ -41,7 +41,7 @@ rather than collapsing them to one.
 | `scripts/main.py` | Entry point — runs both passes, owns pass isolation |
 | `scripts/fetcher.py` | Feed fetching and in-run dedup (20s socket timeout per request) |
 | `scripts/db.py` | Schema, `digest_runs` inserts, `seen_links` dedup and pruning |
-| `scripts/claude_api.py` | Shared Claude call wrapper — retries 429/5xx with backoff |
+| `scripts/claude_api.py` | Shared Claude call wrapper — retries 429/5xx, extracts text blocks, raises on refusal |
 | `scripts/*_digest_generator.py` | The two curation prompts |
 | `config/digest_config.json` | Lookback, per-source caps, minimum item count, model |
 | `config/org_sources.json`, `config/press_sources.json` | Feed lists |

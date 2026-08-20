@@ -4,7 +4,7 @@ from datetime import datetime
 
 import anthropic
 
-from claude_api import create_message
+from claude_api import create_message, message_text
 
 
 SYSTEM_PROMPT = """\
@@ -149,5 +149,5 @@ def generate_digest(
         messages=[{"role": "user", "content": user_message}],
     )
 
-    body = response.content[0].text.strip()
+    body = message_text(response).strip()
     return header + body

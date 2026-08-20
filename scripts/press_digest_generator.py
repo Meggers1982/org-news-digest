@@ -12,7 +12,7 @@ from datetime import datetime
 
 import anthropic
 
-from claude_api import create_message
+from claude_api import create_message, message_text
 
 
 def generate_digest(
@@ -104,4 +104,4 @@ Do not add any meta-commentary about the selection process — no notes about sl
         max_tokens=8000,
         messages=[{"role": "user", "content": prompt}],
     )
-    return header + message.content[0].text
+    return header + message_text(message)
