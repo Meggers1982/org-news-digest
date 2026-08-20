@@ -7,26 +7,34 @@ const LABELS: Record<DigestRun["digest_type"], string> = {
   org: "Org Watch",
 };
 
-export default function DigestSection({ run }: { run: DigestRun | null }) {
-  const label = run ? LABELS[run.digest_type] : "";
-
+/** Server component on purpose: the markdown never changes client-side, so
+ *  rendering it here keeps react-markdown out of the browser bundle. */
+export default function DigestSection({
+  run,
+  showTime,
+}: {
+  run: DigestRun;
+  showTime: boolean;
+}) {
   return (
     <section className="digest-section">
-      {run ? (
-        <>
-          <div className="ds-header">
-            <h3>{label}</h3>
-            <span className="ds-meta">
-              {run.item_count} items &middot; {run.source_count} sources
-            </span>
-          </div>
-          <div className="markdown-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
-          </div>
-        </>
-      ) : (
-        <p className="ds-meta">No digest has run yet for this section.</p>
-      )}
+      <div className="ds-header">
+        <h3>
+          {LABELS[run.digest_type]}
+          {showTime && <span className="ds-time">{run.run_time}</span>}
+        </h3>
+        <div className="ds-actions">
+          <span className="ds-meta">
+            {run.item_count} items fetched &middot; {run.source_count} sources
+          </span>
+          <a className="ds-download" href={`/api/docx?id=${run.id}`}>
+            Download .docx
+          </a>
+        </div>
+      </div>
+      <div className="markdown-body">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
+      </div>
     </section>
   );
 }

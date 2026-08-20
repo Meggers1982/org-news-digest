@@ -4,6 +4,8 @@ from datetime import datetime
 
 import anthropic
 
+from claude_api import create_message
+
 
 SYSTEM_PROMPT = """\
 You are a news editor and pitch strategist producing a daily digest for a freelance \
@@ -87,7 +89,7 @@ def generate_digest(
     articles: list[dict],
     source_count: int,
     api_key: str,
-    model: str = "claude-opus-4-5",
+    model: str = "claude-opus-5",
 ) -> str:
     """
     Generate a formatted internal news digest from fetched articles.
@@ -99,7 +101,7 @@ def generate_digest(
         model:        Claude model to use
 
     Returns:
-        Full digest as a markdown string.
+        Full digest as a markdown string, retrying transient API errors.
     """
     client = anthropic.Anthropic(api_key=api_key)
 
@@ -139,9 +141,10 @@ def generate_digest(
         f"{'=' * 60}"
     )
 
-    response = client.messages.create(
+    response = create_message(
+        client,
         model=model,
-        max_tokens=12000,
+        max_tokens=16000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )

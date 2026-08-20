@@ -73,12 +73,22 @@ body {
 
 .run-list { display: flex; flex-direction: column; gap: 8px; }
 .run-card {
+  display: block;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
   cursor: pointer;
   background: var(--panel);
+  color: inherit;
+  text-decoration: none;
   transition: border-color 0.15s;
+}
+.run-card:focus-visible,
+.controls input[type="search"]:focus-visible,
+.ds-download:focus-visible,
+#scroll-top-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .run-card:hover { border-color: var(--accent); }
 .run-card.active { border-color: var(--accent); background: var(--accent-soft); }
@@ -121,6 +131,29 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 }
 .digest-section h3 { margin: 0; font-size: 1.05rem; }
 .digest-section .ds-meta { font-size: 0.78rem; color: var(--muted); }
+.digest-section .ds-time {
+  margin-left: 8px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+.digest-section .ds-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ds-download {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--accent-soft);
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ds-download:hover { border-color: var(--accent); }
 
 .markdown-body { font-size: 0.9rem; }
 .markdown-body :where(h1, h2, h3, h4) { color: var(--text); margin-top: 1.2em; margin-bottom: 0.4em; }

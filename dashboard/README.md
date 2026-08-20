@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# News Digest dashboard
 
-## Getting Started
+Next.js app that reads digest runs straight out of Neon Postgres and renders
+them. Live at **https://news-digest-ivory.vercel.app** (unlisted, no auth).
+Pipeline that fills the database: see the [repo README](../README.md).
 
-First, run the development server:
+## Architecture
+
+One dynamic route. `app/page.tsx` is a Server Component that reads `?date=` and
+`?q=` from the URL, so the browser only ever receives the day being viewed:
+
+- **Sidebar** — `getDateIndex(q)` returns one row per date with run and item
+  counts, and **no markdown**. Search is a Postgres `ilike`, not a client-side
+  filter, so the full corpus never crosses the wire.
+- **Content** — `getRunsForDate(date)` returns every run stored for that date,
+  newest first. Markdown is rendered to HTML in `DigestSection` (a Server
+  Component), keeping `react-markdown` out of the client bundle entirely.
+- **Client** — `Dashboard.tsx` is a thin shell: the debounced search box, the
+  date links, and the back-to-top button.
+
+A date can hold more than one run per digest type, because re-dispatching the
+workflow mid-day yields a second partial digest. All of them render, each
+labelled with its run time, rather than one silently shadowing the others.
+
+Pages are `force-dynamic` — Postgres is the source of truth and traffic is tiny.
+
+### Routes
+
+| Route | Purpose |
+|---|---|
+| `/` | Dashboard. `?date=YYYY-MM-DD` selects a day, `?q=` searches content |
+| `/api/docx?id=<run id>` | Downloads that run as a Word document |
+
+`.docx` export runs server-side (`lib/markdownToDocx.ts` + `docx`), so the
+library stays off the client.
+
+## Local development
+
+`DATABASE_URL` must be in `.env.local` (gitignored):
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run build` and `npx eslint .` should both pass before deploying.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploying
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Vercel project `news-digest` under team `meagan-morris-projects`. **There is no
+Git integration** — pushing to `main` does not deploy. Deploy from this
+directory:
 
-## Learn More
+```bash
+cd dashboard
+npx vercel --prod
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Schema
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Written by `scripts/db.py`; the dashboard only reads.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+digest_runs (id, run_date, digest_type, source_count, item_count, markdown, created_at)
+seen_links  (link, digest_type, first_seen)
+```
 
-## Deploy on Vercel
+`item_count` is how many items were **fetched** for that run after dedup, not how
+many the curator kept — the UI labels it "items fetched" for that reason.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Neon returns `date` / `timestamptz` columns as JS `Date` objects, not strings.
+> Every query here casts them (`run_date::text`, `to_char(created_at …)`), and new
+> queries must too — the TypeScript annotation does not enforce it, and rendering
+> a raw `Date` in JSX throws at runtime.

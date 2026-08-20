@@ -2,10 +2,15 @@
 
 import hashlib
 import re
+import socket
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 import feedparser
+
+# feedparser has no timeout parameter and urllib defaults to blocking forever,
+# so a single stalled feed would hang the whole scheduled run.
+FEED_TIMEOUT_SECONDS = 20
 
 
 def _parse_entry_date(entry) -> Optional[datetime]:
@@ -83,6 +88,28 @@ def fetch_all_sources(
     seen: set[str] = set()
     articles: list[dict] = []
 
+    previous_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(FEED_TIMEOUT_SECONDS)
+    try:
+        _collect(sources, cutoff, max_per_source, seen, articles)
+    finally:
+        socket.setdefaulttimeout(previous_timeout)
+
+    # Sort newest first, then strip internal sort key
+    articles.sort(key=lambda a: a["_pub_dt"], reverse=True)
+    for a in articles:
+        del a["_pub_dt"]
+
+    return articles
+
+
+def _collect(
+    sources: list[dict],
+    cutoff: datetime,
+    max_per_source: int,
+    seen: set[str],
+    articles: list[dict],
+) -> None:
     for source in sources:
         # Skip comment/section-marker entries and disabled sources
         if "_section" in source or source.get("_disabled"):
@@ -158,10 +185,3 @@ def fetch_all_sources(
 
         status = f"{count} item(s)" if count else "nothing new"
         print(f"  {name}: {status}")
-
-    # Sort newest first, then strip internal sort key
-    articles.sort(key=lambda a: a["_pub_dt"], reverse=True)
-    for a in articles:
-        del a["_pub_dt"]
-
-    return articles

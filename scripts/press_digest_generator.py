@@ -8,10 +8,11 @@ Ported from morning-press-digest's curate_and_format(), adapted to:
   main.py can store both digest types the same way
 """
 
-import time
 from datetime import datetime
 
 import anthropic
+
+from claude_api import create_message
 
 
 def generate_digest(
@@ -19,7 +20,7 @@ def generate_digest(
     source_count: int,
     api_key: str,
     preferences: str = "",
-    model: str = "claude-opus-4-8",
+    model: str = "claude-opus-5",
 ) -> str:
     """
     Generate a formatted press-highlights digest from fetched articles.
@@ -32,8 +33,7 @@ def generate_digest(
         model:        Claude model to use
 
     Returns:
-        Full digest as a markdown string, retrying up to 3 times on
-        transient (5xx) API errors.
+        Full digest as a markdown string, retrying transient API errors.
     """
     run_date = datetime.now().strftime("%B %d, %Y")
 
@@ -94,29 +94,14 @@ Good morning! Here are today's most interesting press releases from Business Wir
 - **[Headline]** — [One sentence on why it matters]. [[Business Wire or PR Newswire]]([URL])
 
 Repeat for each category. Use headers that fit the stories (e.g. FDA & Regulatory, Clinical Trials, Mental Health, Pharmaceuticals, Fitness & Wellness, Research & Science, AI & Technology, Consumer, Food & Beverage, Fashion, Entertainment, Travel). Omit categories with no strong picks. Output valid Markdown only — no ASCII art, no box-drawing characters.
+
+Do not add any meta-commentary about the selection process — no notes about slow news days, filtered-out categories, volume minimums, or the strength of the picks. Just the greeting line and the categorized digest.
 """
 
-    last_error = None
-    for attempt in range(1, 4):
-        try:
-            message = client.messages.create(
-                model=model,
-                max_tokens=4096,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return header + message.content[0].text
-        except anthropic.InternalServerError as e:
-            last_error = e
-            wait = 15 * attempt
-            print(f"⚠️  Anthropic 500 error (attempt {attempt}/3), retrying in {wait}s…")
-            time.sleep(wait)
-        except anthropic.APIStatusError as e:
-            if e.status_code and e.status_code >= 500:
-                last_error = e
-                wait = 15 * attempt
-                print(f"⚠️  Anthropic {e.status_code} error (attempt {attempt}/3), retrying in {wait}s…")
-                time.sleep(wait)
-            else:
-                raise
-
-    raise last_error
+    message = create_message(
+        client,
+        model=model,
+        max_tokens=8000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return header + message.content[0].text

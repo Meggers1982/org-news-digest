@@ -13,6 +13,7 @@ repo — Postgres is the only output.
 
 import json
 import sys
+import traceback
 from datetime import date
 from pathlib import Path
 
@@ -58,7 +59,9 @@ def run_pipeline(
         days_back=settings["days_back"],
         max_per_source=settings["max_items_per_source"],
     )
-    articles = [a for a in articles if a["link"] not in seen]
+    # Entries with no link can't be deduped across runs — keep them rather
+    # than letting them collide with each other on the empty string.
+    articles = [a for a in articles if not a["link"] or a["link"] not in seen]
     print(f"{digest_type}: {len(articles)} new item(s) after dedup")
 
     if len(articles) < settings["min_items_to_send"]:
@@ -106,16 +109,28 @@ def main() -> None:
     press_sources = active_sources(load_json(PRESS_SOURCES_PATH))
     preferences = PRESS_PREFERENCES_PATH.read_text().strip() if PRESS_PREFERENCES_PATH.exists() else ""
 
-    run_pipeline(
-        conn, "org", org_sources, config["org"], generate_org_digest,
-        run_date, anthropic_api_key,
-    )
-    run_pipeline(
-        conn, "press", press_sources, config["press"], generate_press_digest,
-        run_date, anthropic_api_key, preferences=preferences,
-    )
+    # Each pass is isolated: a failure in one (a feed outage, an API error
+    # that outlasts the retries) must not stop the other from running.
+    failures = []
+    for digest_type, sources, settings, generate_fn, kwargs in (
+        ("org", org_sources, config["org"], generate_org_digest, {}),
+        ("press", press_sources, config["press"], generate_press_digest, {"preferences": preferences}),
+    ):
+        try:
+            run_pipeline(
+                conn, digest_type, sources, settings, generate_fn,
+                run_date, anthropic_api_key, **kwargs,
+            )
+        except Exception as exc:
+            conn.rollback()
+            failures.append(digest_type)
+            print(f"✗ {digest_type}: pass failed — {type(exc).__name__}: {exc}")
+            traceback.print_exc()
 
     conn.close()
+
+    if failures:
+        sys.exit(f"\nFailed pass(es): {', '.join(failures)}")
     print("\nDone ✓")
 
 

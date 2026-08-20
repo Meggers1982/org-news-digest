@@ -11,13 +11,13 @@
     "_max_items_comment": "Cap on articles fetched per source per run. Prevents a single prolific org from flooding the digest.",
     "min_items_to_send": 1,
     "_min_items_comment": "If fewer than this many articles are found across all sources, skip generating this digest type for the run.",
-    "model": "claude-opus-4-5"
+    "model": "claude-opus-5"
   },
 
   "press": {
     "days_back": 1,
     "max_items_per_source": 60,
     "min_items_to_send": 1,
-    "model": "claude-opus-4-8"
+    "model": "claude-opus-5"
   }
 }

@@ -50,6 +50,9 @@ def load_seen_links(conn: psycopg.Connection, digest_type: str) -> set[str]:
 
 
 def record_seen_links(conn: psycopg.Connection, digest_type: str, links: list[str]) -> None:
+    # Entries with no link would all collide on the empty string, permanently
+    # deduping every future link-less item away — skip them instead.
+    links = [link for link in links if link]
     if not links:
         return
     today = date.today()
