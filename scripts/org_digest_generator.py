@@ -82,6 +82,16 @@ Do not skip any item. This section is the complete record of everything fetched.
 - If a summary field from the feed is thin or missing, infer from the headline and \
   org context. Flag with "(summary from headline only)" if source text was insufficient.
 - Be direct and concrete. Avoid vague superlatives.
+
+## Output rules
+
+- Do not write your own title, date line, or "Daily Digest" heading at the top. \
+  The digest header is added automatically before your output — start directly \
+  with the first organisation's `###` heading.
+- Do not add meta-commentary about the selection process — no volume notes, no \
+  remarks about slow periods, the source mix, how many items were filtered out, \
+  or how strong the picks are. The digest and the All Items index speak for \
+  themselves.
 """
 
 

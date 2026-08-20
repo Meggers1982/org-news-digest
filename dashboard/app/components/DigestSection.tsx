@@ -35,6 +35,22 @@ export default function DigestSection({
       <div className="markdown-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
       </div>
+      {run.trends_raw && (
+        <div className="section-block">
+          <h4>Trends &amp; Continuity</h4>
+          <div className="markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.trends_raw}</ReactMarkdown>
+          </div>
+        </div>
+      )}
+      {run.feature_pitch_raw && (
+        <div className="section-block">
+          <h4>Bigger Picture: Feature Pitch</h4>
+          <div className="markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.feature_pitch_raw}</ReactMarkdown>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -155,6 +155,16 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 }
 .ds-download:hover { border-color: var(--accent); }
 
+.section-block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+.section-block h4 { margin: 0 0 8px; font-size: 0.92rem; color: var(--accent); }
+.section-block .markdown-body { font-size: 0.85rem; }
+
 .markdown-body { font-size: 0.9rem; }
 .markdown-body :where(h1, h2, h3, h4) { color: var(--text); margin-top: 1.2em; margin-bottom: 0.4em; }
 .markdown-body :where(p, li) { color: var(--text); }

@@ -21,6 +21,23 @@ import db
 from fetcher import fetch_all_sources
 from org_digest_generator import generate_digest as generate_org_digest
 from press_digest_generator import generate_digest as generate_press_digest
+from trends_generator import generate_trends_and_pitch
+
+
+DIGEST_CONTEXT = {
+    "org": (
+        "an org news digest for a freelance journalist covering aging, senior care, "
+        "and elder health",
+        "read by a freelance journalist and content creator who pitches consumer and "
+        "trade outlets. Items are grouped by organisation, each with consumer and "
+        "trade story angles already noted.",
+    ),
+    "press": (
+        "a press-release highlights digest",
+        "read by a freelance writer curating morning press-release highlights across "
+        "health, wellness, food, lifestyle, and consumer categories.",
+    ),
+}
 
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -76,6 +93,23 @@ def run_pipeline(
         **generate_kwargs,
     )
 
+    # A trends/feature-pitch hiccup shouldn't cost the digest itself — fall
+    # back to storing it without those two sections.
+    trends_raw, feature_pitch_raw = None, None
+    try:
+        digest_label, digest_context = DIGEST_CONTEXT[digest_type]
+        trends_raw, feature_pitch_raw = generate_trends_and_pitch(
+            conn,
+            digest_type=digest_type,
+            digest_label=digest_label,
+            digest_context=digest_context,
+            new_markdown=markdown,
+            api_key=anthropic_api_key,
+            model=settings["model"],
+        )
+    except Exception as exc:
+        print(f"⚠️  {digest_type}: trends/feature-pitch generation failed — {type(exc).__name__}: {exc}")
+
     db.insert_digest_run(
         conn,
         run_date=run_date,
@@ -83,6 +117,8 @@ def run_pipeline(
         source_count=len(sources),
         item_count=len(articles),
         markdown=markdown,
+        trends_raw=trends_raw,
+        feature_pitch_raw=feature_pitch_raw,
     )
     db.record_seen_links(conn, digest_type, [a["link"] for a in articles])
     print(f"{digest_type}: digest stored ({len(articles)} items).")
