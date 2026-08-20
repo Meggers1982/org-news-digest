@@ -1,25 +1,18 @@
-import Link from "next/link";
-import { getLatestRun } from "@/lib/db";
-import DigestSection from "./components/DigestSection";
+import { getAllRuns } from "@/lib/db";
+import Dashboard from "./components/Dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [press, org] = await Promise.all([
-    getLatestRun("press"),
-    getLatestRun("org"),
-  ]);
+  const runs = await getAllRuns();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">News Digest</h1>
-        <Link href="/history" className="text-sm underline text-black/60 dark:text-white/60">
-          History
-        </Link>
+    <>
+      <header className="app-header">
+        <h1>News Digest</h1>
+        <p>Full run history — press highlights and org watch, browsable by date.</p>
       </header>
-      <DigestSection run={press} />
-      <DigestSection run={org} />
-    </main>
+      <Dashboard runs={runs} />
+    </>
   );
 }

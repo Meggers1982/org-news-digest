@@ -1,0 +1,153 @@
+:root {
+  --bg: #f7f5f2;
+  --panel: #ffffff;
+  --border: #e4ddd3;
+  --text: #2b2622;
+  --muted: #6f6759;
+  --accent: #7a5c3e;
+  --accent-soft: #efe6d9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1a17;
+    --panel: #262320;
+    --border: #3a352e;
+    --text: #efe9e0;
+    --muted: #a89d8c;
+    --accent: #d9b98a;
+    --accent-soft: #332c22;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.45;
+}
+
+.app-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.app-header h1 { margin: 0 0 4px; font-size: 1.3rem; }
+.app-header p { margin: 0; color: var(--muted); font-size: 0.85rem; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  position: sticky;
+  top: 80px;
+}
+@media (max-width: 860px) {
+  .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+.controls { margin-bottom: 14px; }
+.controls input[type="search"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.run-list { display: flex; flex-direction: column; gap: 8px; }
+.run-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--panel);
+  transition: border-color 0.15s;
+}
+.run-card:hover { border-color: var(--accent); }
+.run-card.active { border-color: var(--accent); background: var(--accent-soft); }
+.run-card .rc-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 3px; }
+.run-card .rc-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.run-count { color: var(--muted); font-size: 0.78rem; margin-bottom: 8px; }
+
+main.content { padding: 24px 28px 60px; min-width: 0; }
+.empty-state { color: var(--muted); padding: 40px 0; text-align: center; }
+
+.run-header { margin-bottom: 20px; }
+.run-header h2 { margin: 0 0 8px; font-size: 1.4rem; }
+.run-header .meta-row { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 0.85rem; }
+
+.digest-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.digest-section .ds-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.digest-section h3 { margin: 0; font-size: 1.05rem; }
+.digest-section .ds-meta { font-size: 0.78rem; color: var(--muted); }
+
+.markdown-body { font-size: 0.9rem; }
+.markdown-body :where(h1, h2, h3, h4) { color: var(--text); margin-top: 1.2em; margin-bottom: 0.4em; }
+.markdown-body :where(p, li) { color: var(--text); }
+.markdown-body a { color: var(--accent); text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body strong { color: var(--accent); }
+.markdown-body ul, .markdown-body ol { padding-left: 1.2em; }
+.markdown-body hr { border-color: var(--border); }
+.markdown-body code { background: var(--accent-soft); padding: 1px 4px; border-radius: 4px; }
+
+#scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+}
+#scroll-top-btn:hover { border-color: var(--accent); }
