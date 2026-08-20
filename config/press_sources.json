@@ -1,0 +1,41 @@
+{
+  "_comment": "Source list for the press-highlights digest — general consumer/lifestyle press-release feeds, curated by press_digest_generator.py using preferences/press_preferences.md. Ported from morning-press-digest.",
+
+  "sources": [
+    {
+      "name": "Business Wire",
+      "org": "Business Wire",
+      "category": "Business Wire",
+      "feed_url": "https://feed.businesswire.com/rss/home/?rss=G1&lang=en",
+      "verified": true
+    },
+    {
+      "name": "PR Newswire – Health",
+      "org": "PR Newswire",
+      "category": "PR Newswire – Health",
+      "feed_url": "https://www.prnewswire.com/rss/health-latest-news-list.rss",
+      "verified": true
+    },
+    {
+      "name": "PR Newswire – Consumer",
+      "org": "PR Newswire",
+      "category": "PR Newswire – Consumer",
+      "feed_url": "https://www.prnewswire.com/rss/consumer-products-retail-latest-news-list.rss",
+      "verified": true
+    },
+    {
+      "name": "PR Newswire – Multicultural",
+      "org": "PR Newswire",
+      "category": "PR Newswire – Multicultural",
+      "feed_url": "https://www.prnewswire.com/rss/multicultural-latest-news-list.rss",
+      "verified": true
+    },
+    {
+      "name": "PR Newswire",
+      "org": "PR Newswire",
+      "category": "PR Newswire",
+      "feed_url": "https://www.prnewswire.com/rss/news-releases-list.rss",
+      "verified": true
+    }
+  ]
+}

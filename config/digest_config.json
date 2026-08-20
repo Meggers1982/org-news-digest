@@ -1,18 +1,23 @@
 {
   "_comment": "Edit this file to change digest behaviour. Commit the change and the next run picks it up.",
 
-  "days_back": 2,
-  "_days_back_comment": "How many days back to look for new content. 2 gives a buffer so weekend gaps don't miss Monday's news.",
+  "dedup_days": 7,
+  "_dedup_days_comment": "Links seen in a digest_type's output are skipped for this many days across runs (stored in the seen_links table).",
 
-  "max_items_per_source": 20,
-  "_max_items_comment": "Cap on articles fetched per source per run. Prevents a single prolific org from flooding the digest.",
+  "org": {
+    "days_back": 2,
+    "_days_back_comment": "How many days back to look for new content. 2 gives a buffer so weekend gaps don't miss Monday's news.",
+    "max_items_per_source": 20,
+    "_max_items_comment": "Cap on articles fetched per source per run. Prevents a single prolific org from flooding the digest.",
+    "min_items_to_send": 1,
+    "_min_items_comment": "If fewer than this many articles are found across all sources, skip generating this digest type for the run.",
+    "model": "claude-opus-4-5"
+  },
 
-  "min_items_to_send": 1,
-  "_min_items_comment": "If fewer than this many articles are found across all sources, skip the email for that run.",
-
-  "to_email": "REDACTED@example.com",
-  "from_email": "Org News Digest <onboarding@resend.dev>",
-
-  "_model_comment": "Claude model used for digest generation.",
-  "model": "claude-opus-4-5"
+  "press": {
+    "days_back": 1,
+    "max_items_per_source": 60,
+    "min_items_to_send": 1,
+    "model": "claude-opus-4-8"
+  }
 }

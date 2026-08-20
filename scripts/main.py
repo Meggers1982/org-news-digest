@@ -1,20 +1,32 @@
-"""Org news digest pipeline — entry point for GitHub Actions."""
+"""Combined news digest pipeline — entry point for GitHub Actions.
+
+Runs two independent curation passes each invocation:
+  - "org"   — pitch-angle digest for the aging/senior-care/health-policy beat
+  - "press" — general consumer/lifestyle press-release highlights
+
+Each pass fetches its own source list, filters out links already seen in the
+last `dedup_days` days (tracked in the seen_links table), curates with its
+own Claude prompt, and stores the resulting Markdown in digest_runs for the
+dashboard to read. No email is sent and no files are committed back to the
+repo — Postgres is the only output.
+"""
 
 import json
-import os
 import sys
-from datetime import datetime
+from datetime import date
 from pathlib import Path
 
+import db
 from fetcher import fetch_all_sources
-from digest_generator import generate_digest
-from email_sender import send_digest_email
+from org_digest_generator import generate_digest as generate_org_digest
+from press_digest_generator import generate_digest as generate_press_digest
 
 
 REPO_ROOT = Path(__file__).parent.parent
-OUTPUTS_DIR = REPO_ROOT / "outputs"
 CONFIG_PATH = REPO_ROOT / "config" / "digest_config.json"
-SOURCES_PATH = REPO_ROOT / "config" / "sources.json"
+ORG_SOURCES_PATH = REPO_ROOT / "config" / "org_sources.json"
+PRESS_SOURCES_PATH = REPO_ROOT / "config" / "press_sources.json"
+PRESS_PREFERENCES_PATH = REPO_ROOT / "preferences" / "press_preferences.md"
 
 
 def load_json(path: Path) -> dict:
@@ -22,95 +34,88 @@ def load_json(path: Path) -> dict:
         return json.load(f)
 
 
-def unique_output_path(base: Path) -> Path:
-    if not base.exists():
-        return base
-    stem, suffix, parent = base.stem, base.suffix, base.parent
-    for n in range(2, 30):
-        candidate = parent / f"{stem} (Part {n}){suffix}"
-        if not candidate.exists():
-            return candidate
-    return base
+def active_sources(sources_data: dict) -> list[dict]:
+    return [s for s in sources_data.get("sources", []) if "feed_url" in s]
+
+
+def run_pipeline(
+    conn,
+    digest_type: str,
+    sources: list[dict],
+    settings: dict,
+    generate_fn,
+    run_date: date,
+    anthropic_api_key: str,
+    **generate_kwargs,
+) -> None:
+    print(f"\n{'=' * 60}")
+    print(f"{digest_type.upper()} digest — sources: {len(sources)}, lookback: {settings['days_back']}d")
+    print(f"{'=' * 60}")
+
+    seen = db.load_seen_links(conn, digest_type)
+    articles = fetch_all_sources(
+        sources=sources,
+        days_back=settings["days_back"],
+        max_per_source=settings["max_items_per_source"],
+    )
+    articles = [a for a in articles if a["link"] not in seen]
+    print(f"{digest_type}: {len(articles)} new item(s) after dedup")
+
+    if len(articles) < settings["min_items_to_send"]:
+        print(f"{digest_type}: fewer than {settings['min_items_to_send']} item(s) — skipping this pass.")
+        return
+
+    markdown = generate_fn(
+        articles=articles,
+        source_count=len(sources),
+        api_key=anthropic_api_key,
+        model=settings["model"],
+        **generate_kwargs,
+    )
+
+    db.insert_digest_run(
+        conn,
+        run_date=run_date,
+        digest_type=digest_type,
+        source_count=len(sources),
+        item_count=len(articles),
+        markdown=markdown,
+    )
+    db.record_seen_links(conn, digest_type, [a["link"] for a in articles])
+    print(f"{digest_type}: digest stored ({len(articles)} items).")
 
 
 def main() -> None:
-    # ── Environment ──────────────────────────────────────────────────────────
-    anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    resend_api_key = os.environ.get("RESEND_API_KEY", "")
+    import os
 
+    anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not anthropic_api_key:
         sys.exit("ERROR: ANTHROPIC_API_KEY is not set.")
+    if not os.environ.get("DATABASE_URL"):
+        sys.exit("ERROR: DATABASE_URL is not set.")
 
-    # ── Config ───────────────────────────────────────────────────────────────
     config = load_json(CONFIG_PATH)
-    days_back = config.get("days_back", 2)
-    max_per_source = config.get("max_items_per_source", 20)
-    min_items = config.get("min_items_to_send", 1)
-    to_email = config.get("to_email", "")
-    from_email = config.get("from_email", "Org News Digest <onboarding@resend.dev>")
-    model = config.get("model", "claude-opus-4-5")
+    dedup_days = config.get("dedup_days", 7)
+    run_date = date.today()
 
-    # ── Sources ───────────────────────────────────────────────────────────────
-    sources_data = load_json(SOURCES_PATH)
-    sources = sources_data.get("sources", [])
-    # Filter out section-marker entries (they have a _section key)
-    active_sources = [s for s in sources if "feed_url" in s]
+    conn = db.get_connection()
+    db.ensure_schema(conn)
+    db.prune_seen_links(conn, dedup_days)
 
-    run_date = datetime.now().strftime("%Y-%m-%d")
+    org_sources = active_sources(load_json(ORG_SOURCES_PATH))
+    press_sources = active_sources(load_json(PRESS_SOURCES_PATH))
+    preferences = PRESS_PREFERENCES_PATH.read_text().strip() if PRESS_PREFERENCES_PATH.exists() else ""
 
-    print(f"\n{'=' * 60}")
-    print(f"Org News Digest Pipeline — {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}")
-    print(f"Sources : {len(active_sources)}")
-    print(f"Lookback: {days_back} day(s)")
-    print(f"{'=' * 60}\n")
-
-    OUTPUTS_DIR.mkdir(exist_ok=True)
-
-    # ── Step 1: Fetch articles ────────────────────────────────────────────────
-    print("Fetching from all sources...")
-    articles = fetch_all_sources(
-        sources=active_sources,
-        days_back=days_back,
-        max_per_source=max_per_source,
+    run_pipeline(
+        conn, "org", org_sources, config["org"], generate_org_digest,
+        run_date, anthropic_api_key,
     )
-    print(f"\nTotal items after deduplication: {len(articles)}")
-
-    if len(articles) < min_items:
-        print(f"Fewer than {min_items} item(s) found — skipping digest and email.")
-        sys.exit(0)
-
-    # ── Step 2: Generate digest ───────────────────────────────────────────────
-    print("\nGenerating digest with Claude...")
-    digest_content = generate_digest(
-        articles=articles,
-        source_count=len(active_sources),
-        api_key=anthropic_api_key,
-        model=model,
+    run_pipeline(
+        conn, "press", press_sources, config["press"], generate_press_digest,
+        run_date, anthropic_api_key, preferences=preferences,
     )
-    print("Digest generated.")
 
-    # Save digest
-    digest_filename = f"Org News Digest — {run_date}.md"
-    digest_path = unique_output_path(OUTPUTS_DIR / digest_filename)
-    digest_path.write_text(digest_content, encoding="utf-8")
-    print(f"Digest saved: outputs/{digest_path.name}")
-
-    # ── Step 3: Send email ────────────────────────────────────────────────────
-    if to_email and resend_api_key:
-        print("\nSending email...")
-        send_digest_email(
-            to_email=to_email,
-            from_email=from_email,
-            run_date=run_date,
-            item_count=len(articles),
-            source_count=len(active_sources),
-            digest_content=digest_content,
-            resend_api_key=resend_api_key,
-        )
-        print(f"Email sent to {to_email}")
-    else:
-        print("\nSkipping email — RESEND_API_KEY or to_email not configured.")
-
+    conn.close()
     print("\nDone ✓")
 
 
