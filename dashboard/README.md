@@ -50,14 +50,22 @@ npm run dev
 
 ## Deploying
 
-Vercel project `news-digest` under team `meagan-morris-projects`. **There is no
-Git integration** — pushing to `main` does not deploy. Deploy from this
-directory:
+Vercel project `news-digest` under team `meagan-morris-projects`, with
+Root Directory set to `dashboard` and the `.vercel` link at the **repo root**.
+
+Pushing to `main` deploys to production via the Vercel Git integration. To
+deploy by hand, run from the repo root (not from `dashboard/` — the link lives
+at the root, and running from here makes Vercel look for `dashboard/dashboard`):
 
 ```bash
-cd dashboard
-npx vercel --prod
+npx vercel --prod          # production
+npx vercel                 # preview build, safe to test with
 ```
+
+Before 2026-08-21 the Root Directory was the repo root while the app lived in
+`dashboard/`, so every push kicked off a build that failed with "Couldn't find
+any `pages` or `app` directory" and emailed a deployment-failure notice. If
+those emails come back, check Root Directory first.
 
 ## Schema
 

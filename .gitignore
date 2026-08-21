@@ -6,3 +6,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Vercel CLI link directory (machine-local project/org IDs)
+.vercel
