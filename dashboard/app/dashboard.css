@@ -232,7 +232,7 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 .markdown-body :where(p, li) { color: var(--text); }
 .markdown-body a { color: var(--accent); text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
-.markdown-body strong { color: var(--accent); }
+.markdown-body strong { color: var(--text); }
 .markdown-body ul, .markdown-body ol { padding-left: 1.2em; }
 .markdown-body hr { border-color: var(--border); }
 .markdown-body code { background: var(--accent-soft); padding: 1px 4px; border-radius: 4px; }
