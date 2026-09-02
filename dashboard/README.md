@@ -16,8 +16,11 @@ One dynamic route. `app/page.tsx` is a Server Component that reads `?date=` and
   newest first, excluding archived runs unless `?archived=1` is set. Markdown is
   rendered to HTML in `DigestSection` (a Server Component), keeping
   `react-markdown` out of the client bundle entirely. When a run has `trends_raw`,
-  `feature_pitch_raw`, and/or `item_pitches_raw`, they render as callout
-  `.section-block`s below the main digest.
+  `feature_pitch_raw`, `story_spotlight_raw`, and/or `item_pitches_raw`, they
+  render as callout `.section-block`s below the main digest, each with a stable
+  `id` (`feature-pitch-<run id>`, etc.) that a small "Jump to:" nav at the top of
+  the section links to for whichever of Feature Pitch/Story Spotlight/Story Ideas
+  are present on that run.
 - **Client** — `Dashboard.tsx` is a thin shell: the debounced search box, the
   date links, the archived-view toggle, and the back-to-top button. `RunActions`
   is a small separate client island (per-run Archive/Unarchive and Delete
@@ -40,8 +43,8 @@ Pages are `force-dynamic` — Postgres is the source of truth and traffic is tin
 
 `.docx` export runs server-side (`lib/markdownToDocx.ts` + `docx`), so the
 library stays off the client. It includes the run's `trends_raw`,
-`feature_pitch_raw`, and `item_pitches_raw` sections when present, matching
-what's shown on the page.
+`feature_pitch_raw`, `story_spotlight_raw`, and `item_pitches_raw` sections
+when present, matching what's shown on the page.
 
 ## Local development
 
@@ -82,8 +85,8 @@ is the one column the dashboard itself writes to, via `lib/db.ts`'s
 
 ```sql
 digest_runs   (id, run_date, digest_type, source_count, item_count, markdown,
-               trends_raw, feature_pitch_raw, item_pitches_raw, archived_at,
-               created_at)
+               trends_raw, feature_pitch_raw, item_pitches_raw,
+               story_spotlight_raw, archived_at, created_at)
 seen_links    (link, digest_type, first_seen)
 digest_memory (digest_type, memory, updated_at)
 ```
@@ -91,14 +94,20 @@ digest_memory (digest_type, memory, updated_at)
 `item_count` is how many items were **fetched** for that run after dedup, not how
 many the curator kept — the UI labels it "items fetched" for that reason.
 
-`trends_raw`, `feature_pitch_raw`, and `item_pitches_raw` are written by
-`scripts/trends_generator.py` after the digest itself: comparing it against the
-prior digest of the same type, looking for a cross-item pattern worth pitching as
-a standalone feature, and giving individually storyworthy items their own
-one-line pitch angle. All three are nullable — older rows and rows where that
-step failed just render without those sections, no schema branching needed in
-the UI beyond a truthiness check. `digest_memory` holds one running synthesis row
-per digest type that `trends_generator.py` reads and revises each run; the
+`trends_raw`, `feature_pitch_raw`, `story_spotlight_raw`, and `item_pitches_raw`
+are written by `scripts/trends_generator.py` after the digest itself: comparing
+it against the prior digest of the same type, looking for a cross-item pattern
+worth pitching as a standalone feature, picking out 1-3 individual releases that
+stand on their own as a strong standalone story (because they tie into an
+established/emerging thread from `digest_memory` and/or are newsjackable right
+now), and giving individually storyworthy items their own one-line pitch angle.
+`story_spotlight_raw` is deliberately narrower and more curated than
+`item_pitches_raw` — most runs will have zero to two picks, not one per item —
+and is rendered with the same visual prominence as Feature Pitch, not folded
+into the Story Ideas list. All four are nullable — older rows and rows where
+that step failed just render without those sections, no schema branching needed
+in the UI beyond a truthiness check. `digest_memory` holds one running synthesis
+row per digest type that `trends_generator.py` reads and revises each run; the
 dashboard never reads it directly.
 
 `archived_at` is null for an active run and set to the archive timestamp

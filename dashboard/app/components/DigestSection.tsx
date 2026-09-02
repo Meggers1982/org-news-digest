@@ -11,7 +11,11 @@ const LABELS: Record<DigestRun["digest_type"], string> = {
 /** Server component on purpose: the markdown never changes client-side, so
  *  rendering it here keeps react-markdown out of the browser bundle. Archive/
  *  delete need client interactivity, so that lives in the small RunActions
- *  island instead of here. */
+ *  island instead of here.
+ *
+ *  Section ids are plain JSX attributes (these headings are hand-written here,
+ *  not produced by react-markdown, so no rehype-slug is needed) and are keyed
+ *  by run.id so multiple runs on one page never collide. */
 export default function DigestSection({
   run,
   showTime,
@@ -19,6 +23,10 @@ export default function DigestSection({
   run: DigestRun;
   showTime: boolean;
 }) {
+  const featurePitchId = `feature-pitch-${run.id}`;
+  const storySpotlightId = `story-spotlight-${run.id}`;
+  const itemPitchesId = `item-pitches-${run.id}`;
+
   return (
     <section className={`digest-section${run.archived_at ? " archived" : ""}`}>
       <div className="ds-header">
@@ -37,6 +45,14 @@ export default function DigestSection({
           <RunActions id={run.id} archived={Boolean(run.archived_at)} />
         </div>
       </div>
+      {(run.feature_pitch_raw || run.story_spotlight_raw || run.item_pitches_raw) && (
+        <nav className="ds-jumplinks" aria-label="Jump to section">
+          <span>Jump to:</span>
+          {run.feature_pitch_raw && <a href={`#${featurePitchId}`}>Feature Pitch</a>}
+          {run.story_spotlight_raw && <a href={`#${storySpotlightId}`}>Story Spotlight</a>}
+          {run.item_pitches_raw && <a href={`#${itemPitchesId}`}>Story Ideas</a>}
+        </nav>
+      )}
       <div className="markdown-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
       </div>
@@ -49,15 +65,23 @@ export default function DigestSection({
         </div>
       )}
       {run.feature_pitch_raw && (
-        <div className="section-block">
+        <div className="section-block" id={featurePitchId}>
           <h4>Bigger Picture: Feature Pitch</h4>
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.feature_pitch_raw}</ReactMarkdown>
           </div>
         </div>
       )}
+      {run.story_spotlight_raw && (
+        <div className="section-block" id={storySpotlightId}>
+          <h4>Story Spotlight</h4>
+          <div className="markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.story_spotlight_raw}</ReactMarkdown>
+          </div>
+        </div>
+      )}
       {run.item_pitches_raw && (
-        <div className="section-block">
+        <div className="section-block" id={itemPitchesId}>
           <h4>Story Ideas by Item</h4>
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.item_pitches_raw}</ReactMarkdown>

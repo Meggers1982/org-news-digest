@@ -20,6 +20,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -163,6 +167,27 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 }
 .ds-download:hover { border-color: var(--accent); }
 
+.ds-jumplinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border);
+}
+.ds-jumplinks a {
+  color: var(--accent);
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+}
+.ds-jumplinks a:hover { border-color: var(--accent); text-decoration: underline; }
+
 .digest-section.archived { opacity: 0.7; border-style: dashed; }
 .ds-archived-badge {
   margin-left: 8px;
@@ -196,6 +221,8 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
   background: var(--accent-soft);
   padding: 14px 16px;
   margin-top: 14px;
+  /* Clears the sticky .app-header when a jump link scrolls a section into view. */
+  scroll-margin-top: 96px;
 }
 .section-block h4 { margin: 0 0 8px; font-size: 0.92rem; color: var(--accent); }
 .section-block .markdown-body { font-size: 0.85rem; }

@@ -21,6 +21,7 @@ create table if not exists digest_runs (
     trends_raw text,
     feature_pitch_raw text,
     item_pitches_raw text,
+    story_spotlight_raw text,
     archived_at timestamptz,
     created_at timestamptz not null default now()
 );
@@ -28,6 +29,7 @@ create table if not exists digest_runs (
 alter table digest_runs add column if not exists trends_raw text;
 alter table digest_runs add column if not exists feature_pitch_raw text;
 alter table digest_runs add column if not exists item_pitches_raw text;
+alter table digest_runs add column if not exists story_spotlight_raw text;
 alter table digest_runs add column if not exists archived_at timestamptz;
 
 create table if not exists seen_links (
@@ -102,18 +104,19 @@ def insert_digest_run(
     trends_raw: str | None = None,
     feature_pitch_raw: str | None = None,
     item_pitches_raw: str | None = None,
+    story_spotlight_raw: str | None = None,
 ) -> None:
     with conn.cursor() as cur:
         cur.execute(
             """
             insert into digest_runs
                 (run_date, digest_type, source_count, item_count, markdown,
-                 trends_raw, feature_pitch_raw, item_pitches_raw)
-            values (%s, %s, %s, %s, %s, %s, %s, %s)
+                 trends_raw, feature_pitch_raw, item_pitches_raw, story_spotlight_raw)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 run_date, digest_type, source_count, item_count, markdown,
-                trends_raw, feature_pitch_raw, item_pitches_raw,
+                trends_raw, feature_pitch_raw, item_pitches_raw, story_spotlight_raw,
             ),
         )
     conn.commit()

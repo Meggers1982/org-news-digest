@@ -20,6 +20,7 @@ GitHub Actions (13:00 UTC daily)
        ├─ org_digest_generator.py     one Claude call → Markdown
        ├─ press_digest_generator.py   one Claude call → Markdown
        └─ trends_generator.py         one Claude call → Trends & Continuity + Feature Pitch
+                                          + Story Spotlight + Story Ideas by Item
                                           │
                                           ▼
                               dashboard/ (Next.js on Vercel)
@@ -32,14 +33,17 @@ the other, and the job exits non-zero if either failed.
 
 After a digest is generated, `trends_generator.py` compares it against the most
 recent prior digest of the same type and looks across just this run's own items
-for a cross-item pattern worth pitching as a standalone feature. It also gives
-individually storyworthy items their own one-line pitch angle, separate from
-whatever consumer/trade angle the digest itself already gave that item. It writes
-three optional sections (`trends_raw`, `feature_pitch_raw`, `item_pitches_raw` on
-the `digest_runs` row) and revises a running per-digest-type synthesis in
-`digest_memory` so later runs can draw on more than just the single most recent
-digest. A failure here never costs the digest itself — it's caught in
-`run_pipeline` and the digest is stored without those three sections.
+for a cross-item pattern worth pitching as a standalone feature. It also picks
+out 1-3 individual releases that stand on their own as a strong standalone story
+idea — because they tie into a thread already tracked in `digest_memory` or are
+newsjackable against the current news cycle — and separately gives individually
+storyworthy items their own one-line pitch angle, distinct from whatever
+consumer/trade angle the digest itself already gave that item. It writes four
+optional sections (`trends_raw`, `feature_pitch_raw`, `story_spotlight_raw`,
+`item_pitches_raw` on the `digest_runs` row) and revises a running per-digest-type
+synthesis in `digest_memory` so later runs can draw on more than just the single
+most recent digest. A failure here never costs the digest itself — it's caught in
+`run_pipeline` and the digest is stored without those four sections.
 
 Because dedup is global across runs, **re-dispatching the workflow on a day that
 already ran produces a partial digest** covering only what is new since the last

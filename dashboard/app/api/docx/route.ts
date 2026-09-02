@@ -33,6 +33,18 @@ export async function GET(request: Request) {
       ...markdownToDocxParagraphs(run.feature_pitch_raw),
     );
   }
+  if (run.story_spotlight_raw) {
+    children.push(
+      new Paragraph({ text: "Story Spotlight", heading: HeadingLevel.HEADING_2, spacing: { before: 320, after: 100 } }),
+      ...markdownToDocxParagraphs(run.story_spotlight_raw),
+    );
+  }
+  if (run.item_pitches_raw) {
+    children.push(
+      new Paragraph({ text: "Story Ideas by Item", heading: HeadingLevel.HEADING_2, spacing: { before: 320, after: 100 } }),
+      ...markdownToDocxParagraphs(run.item_pitches_raw),
+    );
+  }
 
   const doc = new Document({ sections: [{ children }] });
   const buffer = await Packer.toBuffer(doc);

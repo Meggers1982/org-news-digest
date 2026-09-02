@@ -57,14 +57,40 @@ If the items in this batch are disconnected single stories with no genuine cross
 pattern, write only: "_No cross-item feature angle identified in this batch._" Do not \
 manufacture a pattern that isn't really there.
 
+## Story Spotlight
+
+Independent of the sections above, pick out 1-3 individual releases/reports from the NEW \
+digest — read each candidate on its own, not as a batch or a cross-item pattern — that \
+stand on their own as a genuinely strong standalone story idea. Only pick an item if it \
+clears one or both of these two lenses:
+
+- **Ties into a larger idea** — it connects to a narrative/beat already established in \
+  DIGEST MEMORY (name the specific established or emerging thread it connects to) or to an \
+  unmistakable throughline already visible elsewhere in this NEW digest.
+- **Newsjackable** — it can be pegged to a current event or the news cycle right now (name \
+  the specific current event or moment).
+
+For each pick, use this format:
+
+**[Item headline]**
+*Why this one:* [Ties into a larger idea / Newsjackable / Both] — [one clause naming the \
+specific connection or news peg].
+*The pitch:* [the standalone story angle, 1-2 sentences].
+
+Be selective — most runs will have zero to two genuine spotlight picks, not one per item; \
+per-item pitching already happens below. If nothing in this digest clears the bar for \
+either lens, write only: "_No standalone spotlight picks this run — nothing tied strongly \
+enough to an ongoing thread or a current news peg._"
+
 ## Story Ideas by Item
 
-Independent of both sections above, go back through the individual items in the NEW \
+Independent of all sections above, go back through the individual items in the NEW \
 digest one at a time (not as a batch) and give each genuinely storyworthy item its own \
 one-line pitch: a specific angle plus the type of outlet or section it fits, sharp enough \
 to act on immediately — not a restatement of the headline. Skip items that are pure \
-routine/filler with nothing to pitch; this list does not need to cover every item, only \
-the ones worth a working journalist's time.
+routine/filler with nothing to pitch, and skip any item already picked in Story Spotlight \
+above — this list does not need to cover every item, only the ones worth a working \
+journalist's time.
 
 If individual items in this digest already carry their own consumer/trade story angles \
 (as described in the audience note above), do not restate those — only add a line here \
@@ -81,7 +107,7 @@ entry already says, write only: "_No additional per-item pitches beyond what's a
 in the digest._"
 
 Finally, revise DIGEST MEMORY in light of the NEW digest and append it as a fenced block \
-(used internally — do not explain it, and do not repeat its contents in either visible \
+(used internally — do not explain it, and do not repeat its contents in any visible \
 section above):
 
 ```digest_memory
@@ -116,11 +142,11 @@ def generate_trends_and_pitch(
     new_markdown: str,
     api_key: str,
     model: str,
-) -> tuple[str, str, str]:
-    """Return (trends_raw, feature_pitch_raw, item_pitches_raw) markdown for the
-    three visible sections. As a side effect, revises and persists this digest
-    type's memory row in Postgres so future runs can draw on the full history,
-    not just the single most recent digest.
+) -> tuple[str, str, str, str]:
+    """Return (trends_raw, feature_pitch_raw, story_spotlight_raw, item_pitches_raw)
+    markdown for the four visible sections. As a side effect, revises and
+    persists this digest type's memory row in Postgres so future runs can draw
+    on the full history, not just the single most recent digest.
 
     Opens its own short-lived connections rather than sharing the caller's —
     the Claude call here can run long, and a connection held open across it
@@ -150,7 +176,7 @@ def generate_trends_and_pitch(
     response = create_message(
         client,
         model=model,
-        max_tokens=6144,
+        max_tokens=8192,
         # Same reasoning as the digest generators: this is a synthesis/formatting
         # task, not deep reasoning, so keep effort off the "high" default that
         # otherwise burns budget on adaptive thinking ahead of the visible text.
@@ -171,5 +197,6 @@ def generate_trends_and_pitch(
 
     trends_raw = _parse_named_section(body, "Trends & Continuity")
     feature_pitch_raw = _parse_named_section(body, "Bigger Picture: Feature Pitch")
+    story_spotlight_raw = _parse_named_section(body, "Story Spotlight")
     item_pitches_raw = _parse_named_section(body, "Story Ideas by Item")
-    return trends_raw, feature_pitch_raw, item_pitches_raw
+    return trends_raw, feature_pitch_raw, story_spotlight_raw, item_pitches_raw

@@ -19,11 +19,12 @@ export type DigestRun = {
   source_count: number;
   item_count: number;
   markdown: string;
-  /** Cross-run comparison, standalone-feature pitch, and per-item pitch angles,
-   *  all written by scripts/trends_generator.py. Null when generation failed
-   *  or predates it. */
+  /** Cross-run comparison, standalone-feature pitch, curated standalone-story
+   *  picks, and per-item pitch angles, all written by
+   *  scripts/trends_generator.py. Null when generation failed or predates it. */
   trends_raw: string | null;
   feature_pitch_raw: string | null;
+  story_spotlight_raw: string | null;
   item_pitches_raw: string | null;
   /** Local-time label, formatted in Postgres so server and client agree. */
   run_time: string;
@@ -84,7 +85,7 @@ export async function getRunsForDate(
   if (!isValidDate(runDate)) return [];
   const rows = await sql()`
     select id, run_date::text as run_date, digest_type, source_count, item_count, markdown,
-           trends_raw, feature_pitch_raw, item_pitches_raw,
+           trends_raw, feature_pitch_raw, item_pitches_raw, story_spotlight_raw,
            to_char(created_at at time zone 'America/Chicago', 'HH12:MI AM') as run_time,
            archived_at::text as archived_at
     from digest_runs
@@ -98,7 +99,7 @@ export async function getRunsForDate(
 export async function getRunById(id: number): Promise<DigestRun | null> {
   const rows = await sql()`
     select id, run_date::text as run_date, digest_type, source_count, item_count, markdown,
-           trends_raw, feature_pitch_raw, item_pitches_raw,
+           trends_raw, feature_pitch_raw, item_pitches_raw, story_spotlight_raw,
            to_char(created_at at time zone 'America/Chicago', 'HH12:MI AM') as run_time,
            archived_at::text as archived_at
     from digest_runs
