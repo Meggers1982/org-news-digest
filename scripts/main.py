@@ -94,11 +94,11 @@ def run_pipeline(
     )
 
     # A trends/feature-pitch hiccup shouldn't cost the digest itself — fall
-    # back to storing it without those two sections.
-    trends_raw, feature_pitch_raw = None, None
+    # back to storing it without those three sections.
+    trends_raw, feature_pitch_raw, item_pitches_raw = None, None, None
     try:
         digest_label, digest_context = DIGEST_CONTEXT[digest_type]
-        trends_raw, feature_pitch_raw = generate_trends_and_pitch(
+        trends_raw, feature_pitch_raw, item_pitches_raw = generate_trends_and_pitch(
             digest_type=digest_type,
             digest_label=digest_label,
             digest_context=digest_context,
@@ -118,6 +118,7 @@ def run_pipeline(
         markdown=markdown,
         trends_raw=trends_raw,
         feature_pitch_raw=feature_pitch_raw,
+        item_pitches_raw=item_pitches_raw,
     )
     db.record_seen_links(conn, digest_type, [a["link"] for a in articles])
     print(f"{digest_type}: digest stored ({len(articles)} items).")

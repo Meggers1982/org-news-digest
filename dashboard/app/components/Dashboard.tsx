@@ -11,11 +11,13 @@ export default function Dashboard({
   dates,
   activeDate,
   query,
+  showArchived,
   children,
 }: {
   dates: DateSummary[];
   activeDate: string | null;
   query: string;
+  showArchived: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -38,14 +40,27 @@ export default function Dashboard({
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => {
       const term = value.trim();
-      router.replace(term ? `/?q=${encodeURIComponent(term)}` : "/");
+      const params = new URLSearchParams();
+      if (term) params.set("q", term);
+      if (showArchived) params.set("archived", "1");
+      const qs = params.toString();
+      router.replace(qs ? `/?${qs}` : "/");
     }, SEARCH_DEBOUNCE_MS);
   }
 
   function dateHref(runDate: string) {
     const params = new URLSearchParams({ date: runDate });
     if (query) params.set("q", query);
+    if (showArchived) params.set("archived", "1");
     return `/?${params.toString()}`;
+  }
+
+  function archivedToggleHref() {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (!showArchived) params.set("archived", "1");
+    const qs = params.toString();
+    return qs ? `/?${qs}` : "/";
   }
 
   return (
@@ -59,10 +74,14 @@ export default function Dashboard({
             defaultValue={query}
             onChange={(e) => onSearchChange(e.target.value)}
           />
+          <Link href={archivedToggleHref()} scroll={false} className="archived-toggle">
+            {showArchived ? "← Back to active digests" : "View archived"}
+          </Link>
         </div>
         <div className="run-count">
           {dates.length} {dates.length === 1 ? "day" : "days"}
           {query ? " matching" : ""}
+          {showArchived ? " (archived)" : ""}
         </div>
         <div className="run-list">
           {dates.length === 0 ? (

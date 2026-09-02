@@ -32,12 +32,14 @@ the other, and the job exits non-zero if either failed.
 
 After a digest is generated, `trends_generator.py` compares it against the most
 recent prior digest of the same type and looks across just this run's own items
-for a cross-item pattern worth pitching as a standalone feature. It writes two
-optional sections (`trends_raw`, `feature_pitch_raw` on the `digest_runs` row)
-and revises a running per-digest-type synthesis in `digest_memory` so later runs
-can draw on more than just the single most recent digest. A failure here never
-costs the digest itself — it's caught in `run_pipeline` and the digest is stored
-without those two sections.
+for a cross-item pattern worth pitching as a standalone feature. It also gives
+individually storyworthy items their own one-line pitch angle, separate from
+whatever consumer/trade angle the digest itself already gave that item. It writes
+three optional sections (`trends_raw`, `feature_pitch_raw`, `item_pitches_raw` on
+the `digest_runs` row) and revises a running per-digest-type synthesis in
+`digest_memory` so later runs can draw on more than just the single most recent
+digest. A failure here never costs the digest itself — it's caught in
+`run_pipeline` and the digest is stored without those three sections.
 
 Because dedup is global across runs, **re-dispatching the workflow on a day that
 already ran produces a partial digest** covering only what is new since the last
@@ -69,6 +71,12 @@ Adding a source means adding an object to the relevant `config/*_sources.json` w
 at least `name` and `feed_url`. Optional keys: `org`, `category`, `_disabled`, and
 `source_filter` (a list of terms used to confirm a wire-search result actually came
 from the expected organisation).
+
+For a site with no RSS/Atom feed at all, use `"type": "html"` and `"url"` instead of
+`feed_url` — `fetcher.py`'s `_fetch_html_source` scrapes the page directly. This is
+source-specific and fragile by nature (see the HarrisX entry in
+`config/org_sources.json` for the current example and its markup assumptions); only
+reach for it after confirming no feed exists.
 
 ## Running it
 

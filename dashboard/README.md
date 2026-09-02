@@ -13,12 +13,15 @@ One dynamic route. `app/page.tsx` is a Server Component that reads `?date=` and
   counts, and **no markdown**. Search is a Postgres `ilike`, not a client-side
   filter, so the full corpus never crosses the wire.
 - **Content** — `getRunsForDate(date)` returns every run stored for that date,
-  newest first. Markdown is rendered to HTML in `DigestSection` (a Server
-  Component), keeping `react-markdown` out of the client bundle entirely. When a
-  run has `trends_raw` and/or `feature_pitch_raw`, they render as callout
+  newest first, excluding archived runs unless `?archived=1` is set. Markdown is
+  rendered to HTML in `DigestSection` (a Server Component), keeping
+  `react-markdown` out of the client bundle entirely. When a run has `trends_raw`,
+  `feature_pitch_raw`, and/or `item_pitches_raw`, they render as callout
   `.section-block`s below the main digest.
 - **Client** — `Dashboard.tsx` is a thin shell: the debounced search box, the
-  date links, and the back-to-top button.
+  date links, the archived-view toggle, and the back-to-top button. `RunActions`
+  is a small separate client island (per-run Archive/Unarchive and Delete
+  buttons) so `DigestSection` itself can stay a Server Component.
 
 A date can hold more than one run per digest type, because re-dispatching the
 workflow mid-day yields a second partial digest. All of them render, each
@@ -30,12 +33,15 @@ Pages are `force-dynamic` — Postgres is the source of truth and traffic is tin
 
 | Route | Purpose |
 |---|---|
-| `/` | Dashboard. `?date=YYYY-MM-DD` selects a day, `?q=` searches content |
+| `/` | Dashboard. `?date=YYYY-MM-DD` selects a day, `?q=` searches content, `?archived=1` shows archived runs instead of active ones |
 | `/api/docx?id=<run id>` | Downloads that run as a Word document |
+| `/api/runs/<run id>` (PATCH) | Body `{ archived: boolean }` — archive/unarchive a run |
+| `/api/runs/<run id>` (DELETE) | Permanently deletes a run |
 
 `.docx` export runs server-side (`lib/markdownToDocx.ts` + `docx`), so the
-library stays off the client. It includes the run's `trends_raw` and
-`feature_pitch_raw` sections when present, matching what's shown on the page.
+library stays off the client. It includes the run's `trends_raw`,
+`feature_pitch_raw`, and `item_pitches_raw` sections when present, matching
+what's shown on the page.
 
 ## Local development
 
@@ -69,11 +75,15 @@ those emails come back, check Root Directory first.
 
 ## Schema
 
-Written by `scripts/db.py`; the dashboard only reads.
+The table is defined and migrated by `scripts/db.py` (`ensure_schema`, run at the
+start of every pipeline run). The dashboard reads it as normal, but `archived_at`
+is the one column the dashboard itself writes to, via `lib/db.ts`'s
+`setRunArchived`/`deleteRun` and the `/api/runs/<id>` route.
 
 ```sql
 digest_runs   (id, run_date, digest_type, source_count, item_count, markdown,
-               trends_raw, feature_pitch_raw, created_at)
+               trends_raw, feature_pitch_raw, item_pitches_raw, archived_at,
+               created_at)
 seen_links    (link, digest_type, first_seen)
 digest_memory (digest_type, memory, updated_at)
 ```
@@ -81,14 +91,21 @@ digest_memory (digest_type, memory, updated_at)
 `item_count` is how many items were **fetched** for that run after dedup, not how
 many the curator kept — the UI labels it "items fetched" for that reason.
 
-`trends_raw` and `feature_pitch_raw` are written by `scripts/trends_generator.py`
-after the digest itself, comparing it against the prior digest of the same type
-and looking for a cross-item pattern worth pitching as a standalone feature. Both
-are nullable — older rows and rows where that step failed just render without
-those sections, no schema branching needed in the UI beyond a truthiness check.
-`digest_memory` holds one running synthesis row per digest type that
-`trends_generator.py` reads and revises each run; the dashboard never reads it
-directly.
+`trends_raw`, `feature_pitch_raw`, and `item_pitches_raw` are written by
+`scripts/trends_generator.py` after the digest itself: comparing it against the
+prior digest of the same type, looking for a cross-item pattern worth pitching as
+a standalone feature, and giving individually storyworthy items their own
+one-line pitch angle. All three are nullable — older rows and rows where that
+step failed just render without those sections, no schema branching needed in
+the UI beyond a truthiness check. `digest_memory` holds one running synthesis row
+per digest type that `trends_generator.py` reads and revises each run; the
+dashboard never reads it directly.
+
+`archived_at` is null for an active run and set to the archive timestamp
+otherwise. Archiving is a soft hide — `getDateIndex`/`getRunsForDate` exclude
+archived runs by default and the dashboard's "View archived" link passes
+`includeArchived: true` to see them again. Deleting a run removes the row
+outright and cannot be undone from the UI.
 
 > Neon returns `date` / `timestamptz` columns as JS `Date` objects, not strings.
 > Every query here casts them (`run_date::text`, `to_char(created_at …)`), and new

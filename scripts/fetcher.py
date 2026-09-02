@@ -1,12 +1,17 @@
-"""Fetch and deduplicate articles from RSS/Atom feeds (including PR Newswire and Business Wire search feeds)."""
+"""Fetch and deduplicate articles from RSS/Atom feeds (including PR Newswire and
+Business Wire search feeds), plus a small number of HTML-scraped sources for
+sites that expose no feed at all — see `_fetch_html_source`."""
 
 import hashlib
 import re
 import socket
 from datetime import datetime, timezone, timedelta
 from typing import Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import feedparser
+from bs4 import BeautifulSoup
 
 # feedparser has no timeout parameter and urllib defaults to blocking forever,
 # so a single stalled feed would hang the whole scheduled run.
@@ -40,6 +45,104 @@ def _clean_html(text: str, max_chars: int = 600) -> str:
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text[:max_chars]
+
+
+def _parse_html_date(text: str) -> Optional[datetime]:
+    """Parse a 'Mon D, YYYY' date string (HarrisX's card format) as UTC."""
+    try:
+        return datetime.strptime(text.strip(), "%b %d, %Y").replace(tzinfo=timezone.utc)
+    except (ValueError, AttributeError):
+        return None
+
+
+def _fetch_html_source(
+    source: dict,
+    cutoff: datetime,
+    max_per_source: int,
+    seen: set[str],
+    articles: list[dict],
+) -> None:
+    """
+    Scrape a source's news page directly, for sources confirmed (by hand) to
+    expose no RSS/Atom feed at all — see the source's ``notes`` field.
+
+    Only supports the Webflow CMS post-listing markup used by HarrisX's
+    /news page today: each item is an ``<a class="link-dark-fg">`` card
+    containing an ``<h5 class="black-text">`` title, a ``<p class="paragraph-75">``
+    summary, and a trailing ``<p class="text-sm">`` date. This is inherently
+    fragile — a redesign of that page will silently start returning zero
+    items rather than raising, the same failure mode as a stale feed url.
+    """
+    name = source.get("name", "Unknown source")
+    org = source.get("org", name)
+    category = source.get("category", "")
+    url = source.get("url", "")
+
+    if not url:
+        print(f"  Skipping {name} — no url configured")
+        return
+
+    try:
+        request = Request(url, headers={"User-Agent": "org-news-digest/1.0 (+github)"})
+        with urlopen(request, timeout=FEED_TIMEOUT_SECONDS) as response:
+            html = response.read()
+    except (URLError, HTTPError, TimeoutError, OSError) as exc:
+        print(f"  ⚠ {name}: fetch error — {exc}")
+        return
+
+    soup = BeautifulSoup(html, "html.parser")
+    cards = soup.select("a.link-dark-fg")
+
+    count = 0
+    for card in cards:
+        if count >= max_per_source:
+            break
+
+        href = (card.get("href") or "").strip()
+        if not href:
+            continue
+        link = href if href.startswith("http") else f"https://www.harrisx.com{href}"
+
+        key = hashlib.md5(link.lower().encode()).hexdigest()
+        if key in seen:
+            continue
+
+        title_el = card.select_one("h5.black-text")
+        title = title_el.get_text(strip=True) if title_el else ""
+        if not title:
+            continue
+
+        summary_el = card.select_one("p.paragraph-75")
+        summary = _clean_html(summary_el.get_text(strip=True)) if summary_el else ""
+
+        pub_date = None
+        for candidate in card.select("div.media-info-div p.text-sm"):
+            pub_date = _parse_html_date(candidate.get_text(strip=True))
+            if pub_date:
+                break
+
+        if pub_date and pub_date < cutoff:
+            continue
+
+        seen.add(key)
+        pub_str = pub_date.strftime("%Y-%m-%d") if pub_date else "Date unknown"
+
+        articles.append(
+            {
+                "org": org,
+                "category": category,
+                "source_name": name,
+                "title": title,
+                "summary": summary,
+                "link": link,
+                "published": pub_str,
+                "_pub_dt": pub_date or datetime.min.replace(tzinfo=timezone.utc),
+            }
+        )
+        count += 1
+
+    status = f"{count} item(s)" if count else "nothing new"
+    print(f"  {name}: {status}")
 
 
 def _passes_source_filter(entry, source_filter: list[str]) -> bool:
@@ -113,6 +216,12 @@ def _collect(
     for source in sources:
         # Skip comment/section-marker entries and disabled sources
         if "_section" in source or source.get("_disabled"):
+            continue
+
+        # Sources with no feed at all (e.g. HarrisX) are scraped directly
+        # instead of going through feedparser.
+        if source.get("type") == "html":
+            _fetch_html_source(source, cutoff, max_per_source, seen, articles)
             continue
 
         name = source.get("name", "Unknown source")

@@ -21,13 +21,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
   const query = firstParam(params.q).trim();
   const requestedDate = firstParam(params.date);
+  const showArchived = firstParam(params.archived) === "1";
 
-  const dates = await getDateIndex(query);
+  const dates = await getDateIndex(query, undefined, showArchived);
   const activeDate = dates.some((d) => d.run_date === requestedDate)
     ? requestedDate
     : (dates[0]?.run_date ?? null);
 
-  const runs = activeDate ? orderRuns(await getRunsForDate(activeDate)) : [];
+  const runs = activeDate ? orderRuns(await getRunsForDate(activeDate, showArchived)) : [];
   const summary = activeDate ? dates.find((d) => d.run_date === activeDate) : undefined;
 
   return (
@@ -36,7 +37,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <h1>News Digest</h1>
         <p>Full run history — press highlights and org watch, browsable by date.</p>
       </header>
-      <Dashboard dates={dates} activeDate={activeDate} query={query}>
+      <Dashboard dates={dates} activeDate={activeDate} query={query} showArchived={showArchived}>
         {activeDate ? (
           <>
             <div className="run-header">
@@ -68,7 +69,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </>
         ) : (
           <div className="empty-state">
-            {query ? "No runs match that search." : "No digests have been stored yet."}
+            {query
+              ? "No runs match that search."
+              : showArchived
+                ? "No archived digests."
+                : "No digests have been stored yet."}
           </div>
         )}
       </Dashboard>

@@ -172,6 +172,23 @@
       "source_filter": ["CareScout", "Genworth"],
       "verified": true,
       "notes": "Annual Cost of Care Survey released on Business Wire each March. Now published under CareScout brand."
+    },
+    {
+      "name": "HarrisX News & Polling",
+      "org": "HarrisX",
+      "category": "Health Policy & Cost Research",
+      "type": "html",
+      "url": "https://www.harrisx.com/news",
+      "verified": true,
+      "notes": "No RSS/Atom feed exists (checked 2026-09-02: no <link rel=alternate>, no working /feed or /rss path). Scraped directly via fetcher.py's _fetch_html_source — the /news page is a static-rendered Webflow CMS post listing. HarrisX runs general public-opinion polling, not aging-specific, so most items won't be relevant; Claude filters for aging/caregiving/health-policy angles same as the RAND all-publications feed. Confirmed relevant items do appear, e.g. a HousingWire writeup on financial strain from caring for aging parents."
+    },
+    {
+      "_disabled": true,
+      "name": "Spate",
+      "org": "Spate",
+      "category": "Health Policy & Cost Research",
+      "feed_url": "",
+      "notes": "NOT ADDED (checked 2026-09-02): Spate (spate.nyc, not spate.ai) is a paid B2B consumer-trend-forecasting SaaS. Its public site is marketing pages plus an email-newsletter signup (spate.nyc/subscribe) — no RSS/Atom, no public API. All real data lives behind a login at app.spate.nyc. Nothing here to fetch without a paid subscription. Revisit only if Spate ships a public feed or we obtain API access."
     }
   ]
 }

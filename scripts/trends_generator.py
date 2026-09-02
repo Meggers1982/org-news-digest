@@ -57,6 +57,29 @@ If the items in this batch are disconnected single stories with no genuine cross
 pattern, write only: "_No cross-item feature angle identified in this batch._" Do not \
 manufacture a pattern that isn't really there.
 
+## Story Ideas by Item
+
+Independent of both sections above, go back through the individual items in the NEW \
+digest one at a time (not as a batch) and give each genuinely storyworthy item its own \
+one-line pitch: a specific angle plus the type of outlet or section it fits, sharp enough \
+to act on immediately — not a restatement of the headline. Skip items that are pure \
+routine/filler with nothing to pitch; this list does not need to cover every item, only \
+the ones worth a working journalist's time.
+
+If individual items in this digest already carry their own consumer/trade story angles \
+(as described in the audience note above), do not restate those — only add a line here \
+when you have a genuinely different or sharper angle than what the item's own entry \
+already gives, and skip the item entirely if it doesn't.
+
+Use this format, one line per item:
+
+- **[Item headline]** — [pitch: the angle in one sentence, naming a real outlet type or \
+  section it fits].
+
+If nothing in the NEW digest has an individual pitch worth making beyond what its own \
+entry already says, write only: "_No additional per-item pitches beyond what's already \
+in the digest._"
+
 Finally, revise DIGEST MEMORY in light of the NEW digest and append it as a fenced block \
 (used internally — do not explain it, and do not repeat its contents in either visible \
 section above):
@@ -93,11 +116,11 @@ def generate_trends_and_pitch(
     new_markdown: str,
     api_key: str,
     model: str,
-) -> tuple[str, str]:
-    """Return (trends_raw, feature_pitch_raw) markdown for the two visible
-    sections. As a side effect, revises and persists this digest type's memory
-    row in Postgres so future runs can draw on the full history, not just the
-    single most recent digest.
+) -> tuple[str, str, str]:
+    """Return (trends_raw, feature_pitch_raw, item_pitches_raw) markdown for the
+    three visible sections. As a side effect, revises and persists this digest
+    type's memory row in Postgres so future runs can draw on the full history,
+    not just the single most recent digest.
 
     Opens its own short-lived connections rather than sharing the caller's —
     the Claude call here can run long, and a connection held open across it
@@ -127,7 +150,11 @@ def generate_trends_and_pitch(
     response = create_message(
         client,
         model=model,
-        max_tokens=3072,
+        max_tokens=6144,
+        # Same reasoning as the digest generators: this is a synthesis/formatting
+        # task, not deep reasoning, so keep effort off the "high" default that
+        # otherwise burns budget on adaptive thinking ahead of the visible text.
+        output_config={"effort": "medium"},
         system=_system_prompt(digest_label, digest_context),
         messages=[{"role": "user", "content": user_message}],
     )
@@ -144,4 +171,5 @@ def generate_trends_and_pitch(
 
     trends_raw = _parse_named_section(body, "Trends & Continuity")
     feature_pitch_raw = _parse_named_section(body, "Bigger Picture: Feature Pitch")
-    return trends_raw, feature_pitch_raw
+    item_pitches_raw = _parse_named_section(body, "Story Ideas by Item")
+    return trends_raw, feature_pitch_raw, item_pitches_raw

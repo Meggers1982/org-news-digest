@@ -70,6 +70,14 @@ body {
   color: var(--text);
   font-size: 0.9rem;
 }
+.archived-toggle {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.archived-toggle:hover { color: var(--accent); text-decoration: underline; }
 
 .run-list { display: flex; flex-direction: column; gap: 8px; }
 .run-card {
@@ -154,6 +162,33 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
   white-space: nowrap;
 }
 .ds-download:hover { border-color: var(--accent); }
+
+.digest-section.archived { opacity: 0.7; border-style: dashed; }
+.ds-archived-badge {
+  margin-left: 8px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+.ds-run-actions { display: flex; gap: 8px; }
+.ds-btn {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+.ds-btn:hover { border-color: var(--accent); }
+.ds-btn:disabled { opacity: 0.5; cursor: default; }
+.ds-btn-danger { color: #b3432b; }
+.ds-btn-danger:hover { border-color: #b3432b; }
 
 .section-block {
   border: 1px solid var(--border);

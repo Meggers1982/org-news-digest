@@ -154,7 +154,12 @@ def generate_digest(
     response = create_message(
         client,
         model=model,
-        max_tokens=16000,
+        max_tokens=20000,
+        # This is a selection/formatting task, not deep multi-step reasoning —
+        # "high" (the default) burns a large share of max_tokens on adaptive
+        # thinking before any digest text is written, which is what was
+        # truncating entries regardless of how many items came in.
+        output_config={"effort": "medium"},
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )

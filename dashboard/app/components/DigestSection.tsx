@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { DigestRun } from "@/lib/db";
+import RunActions from "./RunActions";
 
 const LABELS: Record<DigestRun["digest_type"], string> = {
   press: "Press Highlights",
@@ -8,7 +9,9 @@ const LABELS: Record<DigestRun["digest_type"], string> = {
 };
 
 /** Server component on purpose: the markdown never changes client-side, so
- *  rendering it here keeps react-markdown out of the browser bundle. */
+ *  rendering it here keeps react-markdown out of the browser bundle. Archive/
+ *  delete need client interactivity, so that lives in the small RunActions
+ *  island instead of here. */
 export default function DigestSection({
   run,
   showTime,
@@ -17,11 +20,12 @@ export default function DigestSection({
   showTime: boolean;
 }) {
   return (
-    <section className="digest-section">
+    <section className={`digest-section${run.archived_at ? " archived" : ""}`}>
       <div className="ds-header">
         <h3>
           {LABELS[run.digest_type]}
           {showTime && <span className="ds-time">{run.run_time}</span>}
+          {run.archived_at && <span className="ds-archived-badge">Archived</span>}
         </h3>
         <div className="ds-actions">
           <span className="ds-meta">
@@ -30,6 +34,7 @@ export default function DigestSection({
           <a className="ds-download" href={`/api/docx?id=${run.id}`}>
             Download .docx
           </a>
+          <RunActions id={run.id} archived={Boolean(run.archived_at)} />
         </div>
       </div>
       <div className="markdown-body">
@@ -48,6 +53,14 @@ export default function DigestSection({
           <h4>Bigger Picture: Feature Pitch</h4>
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.feature_pitch_raw}</ReactMarkdown>
+          </div>
+        </div>
+      )}
+      {run.item_pitches_raw && (
+        <div className="section-block">
+          <h4>Story Ideas by Item</h4>
+          <div className="markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.item_pitches_raw}</ReactMarkdown>
           </div>
         </div>
       )}
