@@ -25,6 +25,14 @@ knowable on the client and a differing label would be a hydration mismatch.
 
 A back-to-top button appears after 240px of scroll, matching the other two.
 
+Each digest section collapses from its heading, with the collapsed set stored in
+`localStorage` under `digest-collapsed`. `CollapsibleSection` is a thin client
+wrapper: the markdown inside it is still rendered on the server and passed
+through as children, which is why `DigestSection` stays a server component and
+react-markdown stays out of the browser bundle. It renders expanded on the
+server and corrects in an effect, since the stored state is only readable on the
+client. A link to a collapsed section opens it.
+
 ## How it works
 
 ```

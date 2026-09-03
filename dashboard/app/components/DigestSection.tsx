@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { DigestRun } from "@/lib/db";
+import CollapsibleSection from "./CollapsibleSection";
 import RunActions from "./RunActions";
 
 const LABELS: Record<DigestRun["digest_type"], string> = {
@@ -23,6 +24,7 @@ export default function DigestSection({
   run: DigestRun;
   showTime: boolean;
 }) {
+  const trendsId = `trends-${run.id}`;
   const featurePitchId = `feature-pitch-${run.id}`;
   const storySpotlightId = `story-spotlight-${run.id}`;
   const itemPitchesId = `item-pitches-${run.id}`;
@@ -57,36 +59,32 @@ export default function DigestSection({
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
       </div>
       {run.trends_raw && (
-        <div className="section-block">
-          <h4>Trends &amp; Continuity</h4>
+        <CollapsibleSection id={trendsId} title="Trends & Continuity">
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.trends_raw}</ReactMarkdown>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
       {run.feature_pitch_raw && (
-        <div className="section-block" id={featurePitchId}>
-          <h4>Bigger Picture: Feature Pitch</h4>
+        <CollapsibleSection id={featurePitchId} title="Bigger Picture: Feature Pitch">
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.feature_pitch_raw}</ReactMarkdown>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
       {run.story_spotlight_raw && (
-        <div className="section-block" id={storySpotlightId}>
-          <h4>Story Spotlight</h4>
+        <CollapsibleSection id={storySpotlightId} title="Story Spotlight">
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.story_spotlight_raw}</ReactMarkdown>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
       {run.item_pitches_raw && (
-        <div className="section-block" id={itemPitchesId}>
-          <h4>Story Ideas by Item</h4>
+        <CollapsibleSection id={itemPitchesId} title="Story Ideas by Item">
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.item_pitches_raw}</ReactMarkdown>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
     </section>
   );
