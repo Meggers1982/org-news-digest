@@ -82,6 +82,7 @@ export default function CollapsibleSection({
             &#9662;
           </span>
           {title}
+          <span className="section-hint">{collapsed ? "SHOW" : "HIDE"}</span>
         </button>
       </h4>
       <div className="section-body" id={`${id}-body`}>
