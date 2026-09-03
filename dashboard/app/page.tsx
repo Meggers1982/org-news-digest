@@ -1,4 +1,5 @@
 import { getDateIndex, getRunsForDate, type DigestRun } from "@/lib/db";
+import { usDate } from "@/lib/dates";
 import Dashboard from "./components/Dashboard";
 import DigestSection from "./components/DigestSection";
 import ScrollTopButton from "./components/ScrollTopButton";
@@ -46,7 +47,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {activeDate ? (
           <>
             <div className="run-header">
-              <h2>{activeDate}</h2>
+              <h2>{usDate(activeDate)}</h2>
               <div className="meta-row">
                 <span>
                   Press:{" "}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { usDate } from "@/lib/dates";
 import type { DateSummary } from "@/lib/db";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -95,7 +96,7 @@ export default function Dashboard({
                 className={`run-card ${d.run_date === activeDate ? "active" : ""}`}
                 aria-current={d.run_date === activeDate ? "true" : undefined}
               >
-                <div className="rc-title">{d.run_date}</div>
+                <div className="rc-title">{usDate(d.run_date)}</div>
                 <div className="rc-meta">
                   {d.press_runs > 0 && (
                     <span className="badge">
