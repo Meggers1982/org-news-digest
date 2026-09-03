@@ -14,10 +14,16 @@ Postgres, and serves them from a small web dashboard. There is no email.
 
 The color tokens in `dashboard/app/dashboard.css` are shared with
 `senior-research-digest` and `agingwire-research-intelligence` so the three
-dashboards read as one family. Change them in all three or in none. The dark
-values are also mirrored into `:root[data-theme="dark"]`, which does nothing
-here yet — this dashboard follows `prefers-color-scheme` and has no toggle —
-but keeps the structure identical to the other two if one is added.
+dashboards read as one family. Change them in all three or in none.
+
+The theme toggle writes `data-theme` to the root element and remembers the
+choice in `localStorage` under `digest-theme`. An inline script in
+`app/layout.tsx` applies the stored value before first paint — without it a
+stored dark preference flashes light on every load. The button label is static
+("Theme") rather than reflecting the current theme, because the theme is only
+knowable on the client and a differing label would be a hydration mismatch.
+
+A back-to-top button appears after 240px of scroll, matching the other two.
 
 ## How it works
 

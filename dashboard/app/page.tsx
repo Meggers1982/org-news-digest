@@ -1,6 +1,8 @@
 import { getDateIndex, getRunsForDate, type DigestRun } from "@/lib/db";
 import Dashboard from "./components/Dashboard";
 import DigestSection from "./components/DigestSection";
+import ScrollTopButton from "./components/ScrollTopButton";
+import ThemeToggle from "./components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +36,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   return (
     <>
       <header className="app-header">
-        <h1>News Digest</h1>
-        <p>Full run history — press highlights and org watch, browsable by date.</p>
+        <div>
+          <h1>News Digest</h1>
+          <p>Full run history — press highlights and org watch, browsable by date.</p>
+        </div>
+        <ThemeToggle />
       </header>
       <Dashboard dates={dates} activeDate={activeDate} query={query} showArchived={showArchived}>
         {activeDate ? (
@@ -77,6 +82,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </div>
         )}
       </Dashboard>
+      <ScrollTopButton />
     </>
   );
 }
