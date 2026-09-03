@@ -10,6 +10,15 @@ Postgres, and serves them from a small web dashboard. There is no email.
 - **`press`** — general consumer/lifestyle press-release highlights from Business
   Wire and PR Newswire, filtered by `preferences/press_preferences.md`.
 
+## Dashboard palette
+
+The color tokens in `dashboard/app/dashboard.css` are shared with
+`senior-research-digest` and `agingwire-research-intelligence` so the three
+dashboards read as one family. Change them in all three or in none. The dark
+values are also mirrored into `:root[data-theme="dark"]`, which does nothing
+here yet — this dashboard follows `prefers-color-scheme` and has no toggle —
+but keeps the structure identical to the other two if one is added.
+
 ## How it works
 
 ```

@@ -1,23 +1,60 @@
+/* Shared palette across the three digest dashboards: senior-research-digest,
+   agingwire-research-intelligence and this one. Change it in all three or in
+   none -- the whole point is that they read as one family. */
 :root {
-  --bg: #f6f7f9;
+  --bg: #f7f5f2;
   --panel: #ffffff;
-  --border: #e1e5eb;
-  --text: #1f2328;
-  --muted: #5b6470;
-  --accent: #2563eb;
-  --accent-soft: #e8eefd;
+  --border: #e4ddd3;
+  --text: #2b2622;
+  --muted: #6f6759;
+  --accent: #7a5c3e;
+  --accent-soft: #efe6d9;
+  --good: #2f7a4f;
+  --warn: #a5710f;
+  --bad: #b23b3b;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15181d;
-    --panel: #1d2127;
-    --border: #2d323b;
-    --text: #e7eaef;
-    --muted: #98a2b0;
-    --accent: #6c9bfa;
-    --accent-soft: #1c2740;
+  :root:not([data-theme="light"]) {
+    --bg: #1c1a17;
+    --panel: #262320;
+    --border: #3a352e;
+    --text: #efe9e0;
+    --muted: #a89d8c;
+    --accent: #d9b98a;
+    --accent-soft: #332c22;
+    --good: #6fcf94;
+    --warn: #e0ac4f;
+    --bad: #e07a7a;
   }
+}
+
+/* Honored ahead of the media query so an explicit choice always wins, matching
+   the other two dashboards even though this one has no toggle yet. */
+:root[data-theme="dark"] {
+  --bg: #1c1a17;
+  --panel: #262320;
+  --border: #3a352e;
+  --text: #efe9e0;
+  --muted: #a89d8c;
+  --accent: #d9b98a;
+  --accent-soft: #332c22;
+  --good: #6fcf94;
+  --warn: #e0ac4f;
+  --bad: #e07a7a;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f5f2;
+  --panel: #ffffff;
+  --border: #e4ddd3;
+  --text: #2b2622;
+  --muted: #6f6759;
+  --accent: #7a5c3e;
+  --accent-soft: #efe6d9;
+  --good: #2f7a4f;
+  --warn: #a5710f;
+  --bad: #b23b3b;
 }
 
 html {
@@ -212,8 +249,8 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 }
 .ds-btn:hover { border-color: var(--accent); }
 .ds-btn:disabled { opacity: 0.5; cursor: default; }
-.ds-btn-danger { color: #b3432b; }
-.ds-btn-danger:hover { border-color: #b3432b; }
+.ds-btn-danger { color: var(--bad); }
+.ds-btn-danger:hover { border-color: var(--bad); }
 
 .section-block {
   border: 1px solid var(--border);
