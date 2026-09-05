@@ -36,12 +36,6 @@ alter table digest_runs add column if not exists archived_at timestamptz;
 -- now: the row survives, the dashboard stops showing it, and it can come back.
 alter table digest_runs add column if not exists deleted_at timestamptz;
 
--- Search scans every row's full markdown on each debounced keystroke. Fine at
--- 15 days of history, less so at a year, and digest_runs is never pruned.
-create extension if not exists pg_trgm;
-create index if not exists digest_runs_markdown_trgm
-    on digest_runs using gin (markdown gin_trgm_ops);
-
 create table if not exists seen_links (
     link text not null,
     digest_type text not null,
@@ -63,10 +57,38 @@ def get_connection() -> psycopg.Connection:
     return psycopg.connect(os.environ["DATABASE_URL"])
 
 
+# Search scans every row's full markdown on each debounced keystroke. Fine at
+# fifteen days of history, less so at a year, and digest_runs is never pruned.
+#
+# Kept out of SCHEMA and applied separately because CREATE EXTENSION needs a
+# privilege the database role may not have. A speed-up is not worth a run: if
+# this cannot be applied the search stays as slow as it is today, which is
+# survivable, while an exception here would take the whole nightly digest down.
+SEARCH_INDEX = """
+create extension if not exists pg_trgm;
+create index if not exists digest_runs_markdown_trgm
+    on digest_runs using gin (markdown gin_trgm_ops);
+"""
+
+
 def ensure_schema(conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
         cur.execute(SCHEMA)
     conn.commit()
+    ensure_search_index(conn)
+
+
+def ensure_search_index(conn: psycopg.Connection) -> None:
+    """Best-effort. Reports what happened rather than failing the run."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute(SEARCH_INDEX)
+        conn.commit()
+    except psycopg.Error as exc:
+        conn.rollback()
+        print(f"  NOTE: trigram search index not applied ({str(exc).strip()[:160]}); "
+              "search still works, it just scans. Grant the role CREATE on the "
+              "database, or create the extension by hand, to speed it up.")
 
 
 def load_seen_links(conn: psycopg.Connection, digest_type: str) -> set[str]:
