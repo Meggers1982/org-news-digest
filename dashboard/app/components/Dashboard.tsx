@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usDate } from "@/lib/dates";
 import type { DateSummary } from "@/lib/db";
 
@@ -23,14 +23,10 @@ export default function Dashboard({
 }) {
   const router = useRouter();
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
+  // The back-to-top button lives in ScrollTopButton, mounted alongside this
+  // component in page.tsx. There was a second copy here with its own listener
+  // and its own threshold, both carrying id="scroll-top-btn" -- two elements
+  // sharing one id, stacked on the same coordinates past 400px, announced twice.
   useEffect(() => () => {
     if (debounce.current) clearTimeout(debounce.current);
   }, []);
@@ -117,16 +113,6 @@ export default function Dashboard({
         </div>
       </aside>
       <main className="content">{children}</main>
-      {showScrollTop && (
-        <button
-          id="scroll-top-btn"
-          title="Back to top"
-          aria-label="Back to top"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          &#8593;
-        </button>
-      )}
     </div>
   );
 }

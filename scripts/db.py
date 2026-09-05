@@ -31,6 +31,16 @@ alter table digest_runs add column if not exists feature_pitch_raw text;
 alter table digest_runs add column if not exists item_pitches_raw text;
 alter table digest_runs add column if not exists story_spotlight_raw text;
 alter table digest_runs add column if not exists archived_at timestamptz;
+-- Delete used to be a hard delete on a table with no backup, reachable from an
+-- unauthenticated endpoint keyed by a sequential integer. It is a soft delete
+-- now: the row survives, the dashboard stops showing it, and it can come back.
+alter table digest_runs add column if not exists deleted_at timestamptz;
+
+-- Search scans every row's full markdown on each debounced keystroke. Fine at
+-- 15 days of history, less so at a year, and digest_runs is never pruned.
+create extension if not exists pg_trgm;
+create index if not exists digest_runs_markdown_trgm
+    on digest_runs using gin (markdown gin_trgm_ops);
 
 create table if not exists seen_links (
     link text not null,

@@ -1,60 +1,89 @@
-/* Shared palette across the three digest dashboards: senior-research-digest,
-   agingwire-research-intelligence and this one. Change it in all three or in
-   none -- the whole point is that they read as one family. */
+/* The palette the three digest dashboards share.
+ *
+ * It stopped being shared on 2026-09-05: senior-research-digest and
+ * agingwire-research-intelligence were both restyled onto the freelance-opps
+ * design system and this one was not, while this comment went on claiming they
+ * were one family. Those two now carry byte-identical token blocks, so this is
+ * a copy of theirs -- change it in all three or in none, and mean it.
+ *
+ * The --band-* and --tone-* families are theirs and are kept here so the three
+ * files stay diffable; nothing on this dashboard scores or tracks status yet.
+ */
 :root {
-  --bg: #f7f5f2;
+  --bg: #f7f6f3;
   --panel: #ffffff;
-  --border: #e4ddd3;
-  --text: #2b2622;
-  --muted: #6f6759;
-  --accent: #7a5c3e;
-  --accent-soft: #efe6d9;
-  --good: #2f7a4f;
-  --warn: #a5710f;
-  --bad: #b23b3b;
+  --border: #e3e0d9;
+  --text: #1c1b18;
+  --muted: #6b675e;
+  --faint: #918c81;
+  --accent: #1f5f4f;
+  --accent-soft: #e6efeb;
+  --accent-ink: #ffffff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-lifted: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  --good: #047857;
+  --warn: #b45309;
+  --bad: #be123c;
+
+  --tone-info-bd: #7dd3fc; --tone-info-bg: #f0f9ff; --tone-info-ink: #0c4a6e;
+  --tone-warn-bd: #fcd34d; --tone-warn-bg: #fffbeb; --tone-warn-ink: #78350f;
+  --tone-good-bd: #34d399; --tone-good-bg: #ecfdf5; --tone-good-ink: #064e3b;
+  --tone-bad-bd:  #fda4af; --tone-bad-bg:  #fff1f2; --tone-bad-ink:  #881337;
 }
 
+/* This dashboard keeps its media query, which is the part the other two got
+   wrong: they hard-force light and cannot follow the OS at all. An explicit
+   choice still wins in either direction, below. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1c1a17;
-    --panel: #262320;
-    --border: #3a352e;
-    --text: #efe9e0;
-    --muted: #a89d8c;
-    --accent: #d9b98a;
-    --accent-soft: #332c22;
-    --good: #6fcf94;
-    --warn: #e0ac4f;
-    --bad: #e07a7a;
+    --bg: #171a19;
+    --panel: #212524;
+    --border: #343937;
+    --text: #ecebe6;
+    --muted: #a3a099;
+    --faint: #82807a;
+    --accent: #6cc0a6;
+    --accent-soft: #1e2c28;
+    --accent-ink: #10201b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-lifted: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #fb7185;
   }
 }
 
-/* Honored ahead of the media query so an explicit choice always wins, matching
-   the other two dashboards even though this one has no toggle yet. */
 :root[data-theme="dark"] {
-  --bg: #1c1a17;
-  --panel: #262320;
-  --border: #3a352e;
-  --text: #efe9e0;
-  --muted: #a89d8c;
-  --accent: #d9b98a;
-  --accent-soft: #332c22;
-  --good: #6fcf94;
-  --warn: #e0ac4f;
-  --bad: #e07a7a;
+  --bg: #171a19;
+  --panel: #212524;
+  --border: #343937;
+  --text: #ecebe6;
+  --muted: #a3a099;
+  --faint: #82807a;
+  --accent: #6cc0a6;
+  --accent-soft: #1e2c28;
+  --accent-ink: #10201b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-lifted: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #fb7185;
 }
 
 :root[data-theme="light"] {
-  --bg: #f7f5f2;
+  --bg: #f7f6f3;
   --panel: #ffffff;
-  --border: #e4ddd3;
-  --text: #2b2622;
-  --muted: #6f6759;
-  --accent: #7a5c3e;
-  --accent-soft: #efe6d9;
-  --good: #2f7a4f;
-  --warn: #a5710f;
-  --bad: #b23b3b;
+  --border: #e3e0d9;
+  --text: #1c1b18;
+  --muted: #6b675e;
+  --faint: #918c81;
+  --accent: #1f5f4f;
+  --accent-soft: #e6efeb;
+  --accent-ink: #ffffff;
+  --good: #047857;
+  --warn: #b45309;
+  --bad: #be123c;
 }
 
 html {
@@ -64,7 +93,8 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans), "Source Sans 3", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.45;
 }
 
@@ -382,3 +412,28 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
 }
 #scroll-top-btn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
 #scroll-top-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+/* Error and loading boundaries. Neither existed: a failed Neon read fell
+   through to Next's generic screen with no way to tell "the database is down"
+   from "the pipeline hasn't run today", and no retry. */
+.boundary {
+  max-width: 40rem;
+  margin: 3rem auto;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+}
+.boundary h2 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.boundary p { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.9rem; }
+.boundary-detail {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+.ds-error {
+  margin-left: 0.5rem;
+  color: var(--bad);
+  font-size: 0.78rem;
+}

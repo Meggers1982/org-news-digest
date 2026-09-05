@@ -44,13 +44,15 @@ export function isValidDate(value: string): boolean {
 
 /** Dates that have at least one run, newest first, optionally full-text filtered.
  *  Searching happens in Postgres so it stays correct as history grows.
- *  Archived runs are excluded from both the counts and the date list itself
- *  (a date whose only runs are archived drops out entirely) unless
- *  includeArchived is set. */
+ *
+ *  archivedOnly picks which side of the archive you get, rather than adding to
+ *  it: `includeArchived` was OR-ed into the predicate, so the "archived" view
+ *  matched every row and showed the active runs back to you under an
+ *  "archived" heading. There was no way to see what you had archived at all. */
 export async function getDateIndex(
   query = "",
   limit = 400,
-  includeArchived = false,
+  archivedOnly = false,
 ): Promise<DateSummary[]> {
   const term = query.trim();
   const like = `%${term}%`;
@@ -62,7 +64,9 @@ export async function getDateIndex(
       coalesce(sum(item_count) filter (where digest_type = 'press'), 0)::int as press_items,
       coalesce(sum(item_count) filter (where digest_type = 'org'), 0)::int as org_items
     from digest_runs
-    where (${includeArchived} or archived_at is null)
+    where deleted_at is null
+      and (case when ${archivedOnly} then archived_at is not null
+                else archived_at is null end)
       and (${term}::text = ''
        or markdown ilike ${like}
        or run_date::text ilike ${like})
@@ -76,11 +80,11 @@ export async function getDateIndex(
 /** Every run stored for a date, newest first. A day can hold more than one run
  *  per type when the workflow is re-dispatched; each is a distinct partial
  *  digest (cross-run link dedup means a re-run only sees what is new), so they
- *  are all returned rather than collapsed to one. Archived runs are excluded
- *  unless includeArchived is set. */
+ *  are all returned rather than collapsed to one. archivedOnly picks which side
+ *  of the archive is returned. */
 export async function getRunsForDate(
   runDate: string,
-  includeArchived = false,
+  archivedOnly = false,
 ): Promise<DigestRun[]> {
   if (!isValidDate(runDate)) return [];
   const rows = await sql()`
@@ -90,7 +94,9 @@ export async function getRunsForDate(
            archived_at::text as archived_at
     from digest_runs
     where run_date = ${runDate}::date
-      and (${includeArchived} or archived_at is null)
+      and deleted_at is null
+      and (case when ${archivedOnly} then archived_at is not null
+                else archived_at is null end)
     order by created_at desc
   `;
   return rows as DigestRun[];
@@ -103,7 +109,7 @@ export async function getRunById(id: number): Promise<DigestRun | null> {
            to_char(created_at at time zone 'America/Chicago', 'HH12:MI AM') as run_time,
            archived_at::text as archived_at
     from digest_runs
-    where id = ${id}
+    where id = ${id} and deleted_at is null
   `;
   return (rows[0] as DigestRun) ?? null;
 }
@@ -117,8 +123,13 @@ export async function setRunArchived(id: number, archived: boolean): Promise<voi
   `;
 }
 
-/** Permanently remove a single run. Irreversible — the dashboard confirms
- *  before calling this. */
+/** Remove a run from every view. Recoverable: the row stays, `deleted_at` is
+ *  stamped, and clearing it in the database brings the run back.
+ *
+ *  This used to be `delete from digest_runs`, on a table with no backup,
+ *  reachable from an endpoint with no authentication and keyed by a sequential
+ *  integer. The confirm() in the UI was the only thing between a stranger with
+ *  the URL and the entire archive. */
 export async function deleteRun(id: number): Promise<void> {
-  await sql()`delete from digest_runs where id = ${id}`;
+  await sql()`update digest_runs set deleted_at = now() where id = ${id}`;
 }

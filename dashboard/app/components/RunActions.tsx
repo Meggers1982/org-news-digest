@@ -15,9 +15,13 @@ export default function RunActions({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // alert() blocks the thread and reads as a browser failure rather than
+  // something this page is telling you.
+  const [error, setError] = useState<string | null>(null);
 
   async function toggleArchive() {
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/runs/${id}`, {
         method: "PATCH",
@@ -27,21 +31,24 @@ export default function RunActions({
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
     } catch (err) {
-      alert(`Couldn't ${archived ? "unarchive" : "archive"} this run: ${err}`);
+      setError(`Couldn't ${archived ? "unarchive" : "archive"} this run: ${err}`);
     } finally {
       setBusy(false);
     }
   }
 
   async function deleteRun() {
-    if (!confirm("Permanently delete this digest run? This can't be undone.")) return;
+    // Recoverable now -- deleteRun stamps deleted_at rather than removing the
+    // row -- but it still takes a run off every view, so it stays gated.
+    if (!confirm("Remove this digest run from the dashboard?")) return;
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/runs/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
     } catch (err) {
-      alert(`Couldn't delete this run: ${err}`);
+      setError(`Couldn't delete this run: ${err}`);
     } finally {
       setBusy(false);
     }
@@ -60,6 +67,11 @@ export default function RunActions({
       >
         Delete
       </button>
+      {error && (
+        <span className="ds-error" role="status">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

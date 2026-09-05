@@ -47,12 +47,15 @@ export default function DigestSection({
           <RunActions id={run.id} archived={Boolean(run.archived_at)} />
         </div>
       </div>
-      {(run.feature_pitch_raw || run.story_spotlight_raw || run.item_pitches_raw) && (
+      {/* Trends renders as its own collapsible section but was the one optional
+          section with no way to jump to it. */}
+      {(run.trends_raw || run.feature_pitch_raw || run.story_spotlight_raw || run.item_pitches_raw) && (
         <nav className="ds-jumplinks" aria-label="Jump to section">
           <span>Jump to:</span>
           {run.feature_pitch_raw && <a href={`#${featurePitchId}`}>Feature Pitch</a>}
           {run.story_spotlight_raw && <a href={`#${storySpotlightId}`}>Story Spotlight</a>}
           {run.item_pitches_raw && <a href={`#${itemPitchesId}`}>Story Ideas</a>}
+          {run.trends_raw && <a href={`#${trendsId}`}>Trends</a>}
         </nav>
       )}
       <div className="markdown-body">

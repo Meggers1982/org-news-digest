@@ -129,10 +129,35 @@ base it only on the NEW digest.
 
 
 def _parse_named_section(text: str, heading: str) -> str:
+    """Body of one named section, or "" when it is not there.
+
+    The level is deliberately loose. This anchored on exactly "## " and returned
+    "" on any drift -- a "###", an "and" for an "&", a stray fence -- which was
+    then stored as a non-null empty string and falsy-checked away on the page,
+    so the section and its jump link vanished with nothing logged and no way to
+    tell it from the model legitimately having skipped it. The sibling repo lost
+    the verdicts in 22 of 52 fact-check reports to this exact mistake, pinned to
+    "###" while the model wrote "##".
+    """
     match = re.search(
-        rf"^## {re.escape(heading)}\s*\n(.*?)(?=\n## |\Z)", text, re.DOTALL | re.MULTILINE
+        rf"^#{{2,4}}\s*{re.escape(heading)}\s*\n(.*?)(?=\n#{{2,4}}\s|\Z)",
+        text, re.DOTALL | re.MULTILINE,
     )
     return match.group(1).strip() if match else ""
+
+
+def _split_named_sections(text: str, headings: tuple[str, ...]) -> dict[str, str]:
+    """Every named section, saying out loud which ones did not turn up.
+
+    An empty section is indistinguishable from an absent one downstream, so the
+    only place it can be noticed is here, while the answer is still in hand.
+    """
+    found = {h: _parse_named_section(text, h) for h in headings}
+    missing = [h for h, body in found.items() if not body]
+    if missing:
+        print(f"  WARNING: no section matched {missing} in the model's answer; "
+              "they will be blank on the dashboard.")
+    return found
 
 
 def generate_trends_and_pitch(
@@ -195,8 +220,14 @@ def generate_trends_and_pitch(
             write_conn.close()
         body = body[: memory_match.start()].rstrip()
 
-    trends_raw = _parse_named_section(body, "Trends & Continuity")
-    feature_pitch_raw = _parse_named_section(body, "Bigger Picture: Feature Pitch")
-    story_spotlight_raw = _parse_named_section(body, "Story Spotlight")
-    item_pitches_raw = _parse_named_section(body, "Story Ideas by Item")
+    sections = _split_named_sections(body, (
+        "Trends & Continuity",
+        "Bigger Picture: Feature Pitch",
+        "Story Spotlight",
+        "Story Ideas by Item",
+    ))
+    trends_raw = sections["Trends & Continuity"]
+    feature_pitch_raw = sections["Bigger Picture: Feature Pitch"]
+    story_spotlight_raw = sections["Story Spotlight"]
+    item_pitches_raw = sections["Story Ideas by Item"]
     return trends_raw, feature_pitch_raw, story_spotlight_raw, item_pitches_raw

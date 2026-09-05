@@ -4,6 +4,15 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 const COLLAPSE_KEY = "digest-collapsed";
 
+/* Section ids carry the run they belong to (trends-41), so the stored set grew
+   by one entry per section per run forever, and collapsing Trends on one date
+   said nothing about the next. Both are fixed by storing the kind rather than
+   the instance: four possible entries, and the preference is what you meant --
+   "keep Trends shut", not "keep Trends shut on run 41". */
+function kindOf(id: string): string {
+  return id.replace(/-\d+$/, "");
+}
+
 function readCollapsed(): Set<string> {
   try {
     const raw = localStorage.getItem(COLLAPSE_KEY);
@@ -46,7 +55,7 @@ export default function CollapsibleSection({
   useEffect(() => {
     // A link straight to this section must open it, or the jump looks broken.
     if (window.location.hash === `#${id}`) return;
-    setCollapsed(readCollapsed().has(id));
+    setCollapsed(readCollapsed().has(kindOf(id)));
   }, [id]);
 
   useEffect(() => {
@@ -61,8 +70,8 @@ export default function CollapsibleSection({
     setCollapsed((prev) => {
       const next = !prev;
       const set = readCollapsed();
-      if (next) set.add(id);
-      else set.delete(id);
+      if (next) set.add(kindOf(id));
+      else set.delete(kindOf(id));
       persist(set);
       return next;
     });
