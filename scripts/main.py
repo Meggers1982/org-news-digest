@@ -53,7 +53,12 @@ def load_json(path: Path) -> dict:
 
 
 def active_sources(sources_data: dict) -> list[dict]:
-    return [s for s in sources_data.get("sources", []) if "feed_url" in s]
+    """Enabled sources with somewhere to fetch from: a ``feed_url``, or a ``url``
+    for the scraped and API source types (HarrisX, WHO)."""
+    return [
+        s for s in sources_data.get("sources", [])
+        if not s.get("_disabled") and ("feed_url" in s or "url" in s)
+    ]
 
 
 def run_pipeline(

@@ -32,6 +32,16 @@ obvious filler unless they contain a hook.
 If an organisation has no storyworthy items, omit it from the main digest body — \
 but every item must still appear in the "All Items" index at the end.
 
+Several government sources are agency-wide news-release feeds that cover every \
+topic the agency handles: CDC, the Department of Labor, HHS, CMS, FDA, NIH, the \
+Social Security Administration, the FTC, the CFPB, and the World Health \
+Organization. From these, keep only releases with a real connection to older \
+adults, family caregivers, or the long-term care workforce — for example, Medicare \
+or Medicaid changes, Social Security and retirement, rules for home care and direct \
+care workers, scams and fraud aimed at older adults, drug approvals or safety \
+actions for conditions common in later life, falls, dementia, and vaccines for \
+adults 65 and older. Leave the rest out of the main digest body.
+
 ## Entry format
 
 Use this structure exactly for each item:

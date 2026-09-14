@@ -105,6 +105,22 @@ source-specific and fragile by nature (see the HarrisX entry in
 `config/org_sources.json` for the current example and its markup assumptions); only
 reach for it after confirming no feed exists.
 
+Two more optional keys cover sites that need special handling:
+
+- `"browser_user_agent": true` sends a browser User-Agent instead of the default
+  `org-news-digest/1.0`, for sites whose CDN rejects the default (the FTC feed).
+- `"type": "who_api"` with `"url"` and `"news_types"` reads WHO's JSON news API
+  through `_fetch_who_source`, keeping only the listed `NewsType` values. WHO's RSS
+  feed stopped updating in early 2026.
+
+A source is fetched when it isn't `_disabled` and has either a `feed_url` or a `url`.
+
+The org pass's Government & Policy sources include agency-wide news-release feeds
+from CDC, the Department of Labor, HHS, CMS, FDA, NIH, the Social Security
+Administration, the FTC, the CFPB, and WHO. These cover every topic the agency
+handles, so `org_digest_generator.py`'s prompt tells Claude to keep only releases
+tied to older adults, family caregivers, or the long-term care workforce.
+
 ## Running it
 
 Requires `ANTHROPIC_API_KEY` and `DATABASE_URL` (both set as GitHub Actions secrets).
@@ -122,7 +138,22 @@ job is capped at 30 minutes. The repo is public so that Actions minutes are free
 
 ## Known feed issues
 
-Both are skipped with a warning rather than failing the run:
+These are skipped with a warning rather than failing the run:
 
 - Commonwealth Fund's RSS returns malformed XML.
 - The CareScout/Genworth PR Newswire search feed returns HTML instead of XML.
+- HHS and Social Security news releases returned an Akamai "Access Denied" (403) to
+  every test request on 2026-09-14. Both stay enabled but unverified in case
+  GitHub's runners get through, so check the run log.
+
+Handled in `fetcher.py`, not skipped:
+
+- CMS's newsroom feed wraps titles in `<a>` tags and puts URL-encoded markup in
+  `<link>`. `_entry_link` recovers the real URL from the title.
+- NIH and CMS date items as `Mon, 09/14/2026 - 11:00`, which feedparser can't read.
+  `_FALLBACK_DATE_FORMATS` parses it so those items respect the lookback cutoff.
+- CDC item links are `tools.cdc.gov` download URLs that redirect to the cdc.gov
+  release page.
+
+The Administration for Community Living has no working feed and is disabled in
+`config/org_sources.json`.

@@ -70,6 +70,98 @@
       "verified": true,
       "notes": "Official NLM Technical Bulletin RSS for PubMed news. Confirmed active."
     },
+    {
+      "name": "CDC Newsroom",
+      "org": "Centers for Disease Control and Prevention",
+      "category": "Government & Policy",
+      "feed_url": "https://tools.cdc.gov/podcasts/feed.asp?feedid=183",
+      "verified": true,
+      "notes": "CDC newsroom releases and statements. Confirmed working 2026-09-14 (50 entries, newest 2026-09-10). Agency-wide, so the digest prompt filters for aging relevance. Item links are tools.cdc.gov download URLs that 301-redirect to the cdc.gov/media/releases page. The larger tools.cdc.gov/api/v2/resources/media/132608.rss feed has the same items going back years, with the same redirect links."
+    },
+    {
+      "name": "Department of Labor News Releases",
+      "org": "U.S. Department of Labor",
+      "category": "Government & Policy",
+      "feed_url": "https://www.dol.gov/rss/releases.xml",
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14 (10 most recent releases). Relevant items: home care and direct care worker rules, older workers, retirement plans."
+    },
+    {
+      "name": "HHS News Releases",
+      "org": "U.S. Department of Health and Human Services",
+      "category": "Government & Policy",
+      "feed_url": "https://www.hhs.gov/rss/news.xml",
+      "verified": false,
+      "notes": "UNVERIFIED: returned an Akamai 'Access Denied' (403) on 2026-09-14 to every request from a local test machine, including browser user agents. Left enabled in case GitHub Actions runners get through; check the run log for a warning. GovDelivery bulletins (USHHS) also rejected requests."
+    },
+    {
+      "name": "CMS Newsroom",
+      "org": "Centers for Medicare & Medicaid Services",
+      "category": "Government & Policy",
+      "feed_url": "https://www.cms.gov/newsroom/rss-feeds",
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14. The feed is malformed: titles are wrapped in <a> tags and <link> holds URL-encoded markup, and dates use Drupal's 'Mon, 09/14/2026 - 09:03' format. fetcher.py repairs all three (_entry_link, _clean_html on titles, _FALLBACK_DATE_FORMATS)."
+    },
+    {
+      "name": "FDA Press Releases",
+      "org": "U.S. Food and Drug Administration",
+      "category": "Government & Policy",
+      "feed_url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml",
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14 (20 entries). Agency-wide; the prompt keeps approvals and safety actions relevant to older adults."
+    },
+    {
+      "name": "NIH News Releases",
+      "org": "National Institutes of Health",
+      "category": "Government & Policy",
+      "feed_url": "https://www.nih.gov/news-releases/feed.xml",
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14 (10 entries). Covers all institutes, including NIA, whose own feed no longer exists. Dates use Drupal's 'Mon, 09/14/2026 - 11:00' format, handled by _FALLBACK_DATE_FORMATS in fetcher.py."
+    },
+    {
+      "name": "Social Security Press Releases",
+      "org": "Social Security Administration",
+      "category": "Government & Policy",
+      "feed_url": "https://www.ssa.gov/news/press/releases/rss.xml",
+      "verified": false,
+      "notes": "UNVERIFIED: same Akamai 'Access Denied' (403) as HHS on 2026-09-14, with default and browser user agents. Left enabled in case Actions runners get through. GovDelivery bulletins (USSSA) also rejected requests."
+    },
+    {
+      "_disabled": true,
+      "name": "ACL News",
+      "org": "Administration for Community Living",
+      "category": "Government & Policy",
+      "feed_url": "https://acl.gov/news-and-events/news/rss.xml",
+      "verified": false,
+      "notes": "NO FEED FOUND (2026-09-14): this path and acl.gov/rss.xml return 404, acl.gov page requests timed out, and GovDelivery (USACL) rejected requests. ACL releases often also appear in HHS news releases. Re-enable if a working feed turns up."
+    },
+    {
+      "name": "FTC Consumer Protection Press Releases",
+      "org": "Federal Trade Commission",
+      "category": "Government & Policy",
+      "feed_url": "https://www.ftc.gov/feeds/press-release-consumer-protection.xml",
+      "browser_user_agent": true,
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14 (30 entries), but only with a browser user agent; the default agent gets a 403. The consumer-protection feed is used instead of all press releases (feeds/press-release.xml) so antitrust items stay out; it's where scams aimed at older adults show up."
+    },
+    {
+      "name": "CFPB Newsroom",
+      "org": "Consumer Financial Protection Bureau",
+      "category": "Government & Policy",
+      "feed_url": "https://www.consumerfinance.gov/about-us/newsroom/feed/",
+      "verified": true,
+      "notes": "Confirmed working 2026-09-14 (21 entries). Low volume as of mid-2026; newest item was 2026-08-14."
+    },
+    {
+      "name": "World Health Organization News Releases",
+      "org": "World Health Organization",
+      "category": "Government & Policy",
+      "type": "who_api",
+      "url": "https://www.who.int/api/news/newsitems",
+      "news_types": ["News release", "Joint News Release"],
+      "verified": true,
+      "notes": "WHO's RSS feed (who.int/rss-feeds/news-english.xml) stopped updating in February 2026, so this reads the JSON API behind who.int/news instead, via fetcher.py's _fetch_who_source. Confirmed current 2026-09-14. news_types keeps news releases only; add \"Statement\" to include WHO statements. The API returns titles but no summaries."
+    },
 
     {
       "_section": "── INDUSTRY & ADVOCACY ──────────────────────────────"
