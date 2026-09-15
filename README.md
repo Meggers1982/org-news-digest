@@ -108,7 +108,8 @@ reach for it after confirming no feed exists.
 Two more optional keys cover sites that need special handling:
 
 - `"browser_user_agent": true` sends a browser User-Agent instead of the default
-  `org-news-digest/1.0`, for sites whose CDN rejects the default (the FTC feed).
+  `org-news-digest/1.0`, for sites whose CDN or firewall rejects the default (the
+  FTC and NIA feeds).
 - `"type": "who_api"` with `"url"` and `"news_types"` reads WHO's JSON news API
   through `_fetch_who_source`, keeping only the listed `NewsType` values (news
   releases and statements today). WHO's RSS feed stopped updating in early 2026.
@@ -151,6 +152,8 @@ Handled in `fetcher.py`, not skipped:
   `_FALLBACK_DATE_FORMATS` parses it so those items respect the lookback cutoff.
 - CDC item links are `tools.cdc.gov` download URLs that redirect to the cdc.gov
   release page.
+- NIA's own News Releases page hasn't posted since January 2025, so the NIA source
+  is its general News Feed. NIA research releases arrive through the NIH feed.
 
 Disabled in `config/org_sources.json`: HHS and Social Security news releases, which
 return an Akamai "Access Denied" (403) both locally and from GitHub Actions, and
