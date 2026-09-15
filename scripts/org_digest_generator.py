@@ -33,9 +33,8 @@ If an organisation has no storyworthy items, omit it from the main digest body â
 but every item must still appear in the "All Items" index at the end.
 
 Several government sources are agency-wide news-release feeds that cover every \
-topic the agency handles: CDC, the Department of Labor, HHS, CMS, FDA, NIH, the \
-Social Security Administration, the FTC, the CFPB, and the World Health \
-Organization. From these, keep only releases with a real connection to older \
+topic the agency handles: CDC, the Department of Labor, CMS, FDA, NIH, the FTC, \
+the CFPB, and the World Health Organization. From these, keep only releases with a real connection to older \
 adults, family caregivers, or the long-term care workforce â€” for example, Medicare \
 or Medicaid changes, Social Security and retirement, rules for home care and direct \
 care workers, scams and fraud aimed at older adults, drug approvals or safety \

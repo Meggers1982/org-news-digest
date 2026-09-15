@@ -87,12 +87,13 @@
       "notes": "Confirmed working 2026-09-14 (10 most recent releases). Relevant items: home care and direct care worker rules, older workers, retirement plans."
     },
     {
+      "_disabled": true,
       "name": "HHS News Releases",
       "org": "U.S. Department of Health and Human Services",
       "category": "Government & Policy",
       "feed_url": "https://www.hhs.gov/rss/news.xml",
       "verified": false,
-      "notes": "UNVERIFIED: returned an Akamai 'Access Denied' (403) on 2026-09-14 to every request from a local test machine, including browser user agents. Left enabled in case GitHub Actions runners get through; check the run log for a warning. GovDelivery bulletins (USHHS) also rejected requests."
+      "notes": "BROKEN: Akamai 'Access Denied' (403) on 2026-09-14 from a local test machine (default and browser user agents) and from GitHub Actions (run 34899163360). GovDelivery bulletins (USHHS) also rejected requests. Disabled until a reachable source turns up."
     },
     {
       "name": "CMS Newsroom",
@@ -119,12 +120,13 @@
       "notes": "Confirmed working 2026-09-14 (10 entries). Covers all institutes, including NIA, whose own feed no longer exists. Dates use Drupal's 'Mon, 09/14/2026 - 11:00' format, handled by _FALLBACK_DATE_FORMATS in fetcher.py."
     },
     {
+      "_disabled": true,
       "name": "Social Security Press Releases",
       "org": "Social Security Administration",
       "category": "Government & Policy",
       "feed_url": "https://www.ssa.gov/news/press/releases/rss.xml",
       "verified": false,
-      "notes": "UNVERIFIED: same Akamai 'Access Denied' (403) as HHS on 2026-09-14, with default and browser user agents. Left enabled in case Actions runners get through. GovDelivery bulletins (USSSA) also rejected requests."
+      "notes": "BROKEN: same Akamai 'Access Denied' (403) as HHS on 2026-09-14, locally and from GitHub Actions (run 34899163360). GovDelivery bulletins (USSSA) also rejected requests. Disabled until a reachable source turns up."
     },
     {
       "_disabled": true,
@@ -153,14 +155,14 @@
       "notes": "Confirmed working 2026-09-14 (21 entries). Low volume as of mid-2026; newest item was 2026-08-14."
     },
     {
-      "name": "World Health Organization News Releases",
+      "name": "World Health Organization News Releases & Statements",
       "org": "World Health Organization",
       "category": "Government & Policy",
       "type": "who_api",
       "url": "https://www.who.int/api/news/newsitems",
-      "news_types": ["News release", "Joint News Release"],
+      "news_types": ["News release", "Joint News Release", "Statement"],
       "verified": true,
-      "notes": "WHO's RSS feed (who.int/rss-feeds/news-english.xml) stopped updating in February 2026, so this reads the JSON API behind who.int/news instead, via fetcher.py's _fetch_who_source. Confirmed current 2026-09-14. news_types keeps news releases only; add \"Statement\" to include WHO statements. The API returns titles but no summaries."
+      "notes": "WHO's RSS feed (who.int/rss-feeds/news-english.xml) stopped updating in February 2026, so this reads the JSON API behind who.int/news instead, via fetcher.py's _fetch_who_source. Confirmed current 2026-09-14. news_types keeps news releases and statements, and drops departmental updates and medical product alerts. The API returns titles but no summaries."
     },
 
     {

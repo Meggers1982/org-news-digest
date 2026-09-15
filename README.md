@@ -110,14 +110,14 @@ Two more optional keys cover sites that need special handling:
 - `"browser_user_agent": true` sends a browser User-Agent instead of the default
   `org-news-digest/1.0`, for sites whose CDN rejects the default (the FTC feed).
 - `"type": "who_api"` with `"url"` and `"news_types"` reads WHO's JSON news API
-  through `_fetch_who_source`, keeping only the listed `NewsType` values. WHO's RSS
-  feed stopped updating in early 2026.
+  through `_fetch_who_source`, keeping only the listed `NewsType` values (news
+  releases and statements today). WHO's RSS feed stopped updating in early 2026.
 
 A source is fetched when it isn't `_disabled` and has either a `feed_url` or a `url`.
 
 The org pass's Government & Policy sources include agency-wide news-release feeds
-from CDC, the Department of Labor, HHS, CMS, FDA, NIH, the Social Security
-Administration, the FTC, the CFPB, and WHO. These cover every topic the agency
+from CDC, the Department of Labor, CMS, FDA, NIH, the FTC, the CFPB, and WHO
+(news releases and statements). These cover every topic the agency
 handles, so `org_digest_generator.py`'s prompt tells Claude to keep only releases
 tied to older adults, family caregivers, or the long-term care workforce.
 
@@ -142,9 +142,6 @@ These are skipped with a warning rather than failing the run:
 
 - Commonwealth Fund's RSS returns malformed XML.
 - The CareScout/Genworth PR Newswire search feed returns HTML instead of XML.
-- HHS and Social Security news releases returned an Akamai "Access Denied" (403) to
-  every test request on 2026-09-14. Both stay enabled but unverified in case
-  GitHub's runners get through, so check the run log.
 
 Handled in `fetcher.py`, not skipped:
 
@@ -155,5 +152,6 @@ Handled in `fetcher.py`, not skipped:
 - CDC item links are `tools.cdc.gov` download URLs that redirect to the cdc.gov
   release page.
 
-The Administration for Community Living has no working feed and is disabled in
-`config/org_sources.json`.
+Disabled in `config/org_sources.json`: HHS and Social Security news releases, which
+return an Akamai "Access Denied" (403) both locally and from GitHub Actions, and
+the Administration for Community Living, which has no working feed.
