@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import socket
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from urllib.error import HTTPError, URLError
@@ -33,9 +34,71 @@ BROWSER_USER_AGENT = (
 # undated and slip past the cutoff on every run.
 _FALLBACK_DATE_FORMATS = ("%a, %m/%d/%Y - %H:%M",)
 
+# One retry when a feed comes back as something that isn't a feed (MEA-734).
+# PR Newswire feeds fail this way from Actions and not from a home machine, and
+# the feeds that fail move around between runs — the shape of rate limiting or
+# bot filtering, where the same URL works moments later. Long enough to be past
+# a burst, short enough that a dozen retries can't blow the run's time budget.
+RETRY_PAUSE_SECONDS = 5
+# How much of a non-feed response to print. Enough to tell a block page from an
+# empty body from HTML, without dumping a page into the run log.
+FAILURE_BODY_CHARS = 200
+
 
 def _user_agent(source: dict) -> str:
     return BROWSER_USER_AGENT if source.get("browser_user_agent") else DEFAULT_USER_AGENT
+
+
+def _describe_failure(source: dict, url: str) -> str:
+    """What a feed that isn't a feed actually was (MEA-734).
+
+    `feedparser` reports only the parse exception, so the log said "syntax
+    error" for a rate-limit page, an empty body and a redirect to HTML alike —
+    three different problems with three different fixes. This re-fetches the
+    URL once, after the parse has already failed, purely to say what came back.
+    It never runs on a healthy feed.
+    """
+    try:
+        request = Request(url, headers={"User-Agent": _user_agent(source)})
+        with urlopen(request, timeout=FEED_TIMEOUT_SECONDS) as response:
+            body = response.read(FAILURE_BODY_CHARS * 4)
+            status = response.status
+            content_type = response.headers.get("Content-Type", "none")
+    except HTTPError as exc:
+        return f"HTTP {exc.code} {exc.reason}"
+    except (URLError, socket.timeout, OSError) as exc:
+        return f"no response — {exc}"
+
+    if not body:
+        return f"HTTP {status}, {content_type}, empty body"
+    prefix = body.decode("utf-8", "replace")[:FAILURE_BODY_CHARS]
+    # One line in a run log: newlines and runs of spaces collapse, so a block
+    # page does not become forty lines of markup.
+    prefix = re.sub(r"\s+", " ", prefix).strip()
+    return f"HTTP {status}, {content_type}, starts: {prefix}"
+
+
+def _parse_feed(source: dict, url: str) -> tuple[object, Optional[str]]:
+    """Parse a feed, retrying once when it comes back as something else.
+
+    Returns the feed and, when it still isn't usable, a sentence for the log.
+    The retry exists because these failures move between feeds from one run to
+    the next while the same URL parses fine from a home machine moments later
+    (MEA-734) — the shape of a burst limit, not of a broken feed.
+    """
+    feed = None
+    for attempt in (1, 2):
+        try:
+            feed = feedparser.parse(url, request_headers={"User-Agent": _user_agent(source)})
+        except Exception as exc:  # noqa: BLE001 - feedparser raises anything
+            return feed, f"fetch error — {exc}"
+        if not (feed.bozo and not feed.entries):
+            return feed, None
+        if attempt == 1:
+            time.sleep(RETRY_PAUSE_SECONDS)
+
+    reason = getattr(feed, "bozo_exception", "unknown")
+    return feed, f"feed parse error after a retry — {reason} [{_describe_failure(source, url)}]"
 
 
 def _parse_entry_date(entry) -> Optional[datetime]:
@@ -358,17 +421,9 @@ def _collect(
             print(f"  Skipping {name} — no feed_url configured")
             continue
 
-        try:
-            feed = feedparser.parse(
-                url,
-                request_headers={"User-Agent": _user_agent(source)},
-            )
-        except Exception as exc:
-            print(f"  ⚠ {name}: fetch error — {exc}")
-            continue
-
-        if feed.bozo and not feed.entries:
-            print(f"  ⚠ {name}: feed parse error — {getattr(feed, 'bozo_exception', 'unknown')}")
+        feed, failure = _parse_feed(source, url)
+        if failure is not None:
+            print(f"  ⚠ {name}: {failure}")
             continue
 
         count = 0

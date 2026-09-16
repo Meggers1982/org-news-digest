@@ -141,8 +141,20 @@ job is capped at 30 minutes. The repo is public so that Actions minutes are free
 
 These are skipped with a warning rather than failing the run:
 
-- Commonwealth Fund's RSS returns malformed XML.
-- The CareScout/Genworth PR Newswire search feed returns HTML instead of XML.
+- Commonwealth Fund's RSS returns malformed XML. As of 2026-09-16 it is worse:
+  the feed answers with a Cloudflare challenge page, and so does the `/rss-feeds`
+  listing that would name an alternative, so there is nothing to switch to.
+- The CareScout/Genworth Business Wire search feed returns HTML instead of XML.
+  PR Newswire's `?q=carescout` search feed is **not** a substitute: it returns
+  valid RSS while ignoring `q=` entirely, so it would quietly deliver the whole
+  PR Newswire firehose and look healthier than the failure it replaced.
+
+**A feed that fails is retried once** after `RETRY_PAUSE_SECONDS`, and if it
+still isn't a feed the warning now carries the HTTP status, the content type and
+the first 200 characters of the body (`_parse_feed` / `_describe_failure`,
+MEA-734). "syntax error" alone read the same for a rate-limit page, an empty
+body and a redirect to HTML, which are three different problems. The extra
+request only happens on a failure, never on a healthy feed.
 
 Handled in `fetcher.py`, not skipped:
 
@@ -152,9 +164,16 @@ Handled in `fetcher.py`, not skipped:
   `_FALLBACK_DATE_FORMATS` parses it so those items respect the lookback cutoff.
 - CDC item links are `tools.cdc.gov` download URLs that redirect to the cdc.gov
   release page.
-- NIA's own News Releases page hasn't posted since January 2025, so the NIA source
-  is its general News Feed. NIA research releases arrive through the NIH feed.
 
 Disabled in `config/org_sources.json`: HHS and Social Security news releases, which
-return an Akamai "Access Denied" (403) both locally and from GitHub Actions, and
-the Administration for Community Living, which has no working feed.
+return an Akamai "Access Denied" (403) both locally and from GitHub Actions; the
+Administration for Community Living, which has no working feed; and **NIA**
+(2026-09-16, MEA-733).
+
+NIA is the one worth remembering, because it was re-enabled on the strength of a
+check that ran in the wrong place. Its feed answers a browser user agent on a
+home machine and refuses the same agent from GitHub Actions, because the AWS WAF
+scores the datacenter IP too — so it failed every morning while looking fine
+locally. **Verify a feed from an Actions run before re-enabling it.** Little is
+lost: the general News Feed's newest item is from 2026-02-27, and NIA research
+releases arrive through the NIH News Releases source.

@@ -28,13 +28,14 @@
       "notes": "BROKEN for our purposes: PR Newswire keyword search for 'aarp' returns any release mentioning AARP (pet food, banking, real estate awards, etc.) — not AARP's own releases. All 20 items were junk and were dropped by Claude. Disabled until a cleaner source is found."
     },
     {
+      "_disabled": true,
       "name": "National Institute on Aging (NIA)",
       "org": "National Institute on Aging",
       "category": "Government & Policy",
       "feed_url": "https://www.nia.nih.gov/news/rss.xml",
       "browser_user_agent": true,
       "verified": true,
-      "notes": "Confirmed working 2026-09-15 with a browser user agent; the default agent gets an AWS WAF bot challenge (405). This is NIA's general News Feed (announcements, funding, program news), newest item 2026-02-27, so expect a few items a year. NIA's News Releases page (feed: taxonomy/term/3550/feed) hasn't posted since 2025-01-02 and its feed is sorted alphabetically, and Research Highlights (taxonomy/term/3549/feed) stopped in May 2025. NIA research releases now go out through the NIH News Releases feed below."
+      "notes": "DISABLED 2026-09-16 (MEA-733): reachable from a home machine with a browser user agent, but NOT from GitHub Actions, which is where this actually runs. The AWS WAF scores the datacenter IP as well as the agent, so Actions gets the 'Human Verification' page and the run logs 'feed parse error — <unknown>:23:2: mismatched tag' every morning (runs 34981377649, 35002445710). Little is lost: this is NIA's general News Feed, newest item 2026-02-27; the News Releases feed (taxonomy/term/3550/feed) hasn't posted since 2025-01-02 and Research Highlights (taxonomy/term/3549/feed) stopped in May 2025. NIA research releases arrive through the NIH News Releases source below. Re-enable only with evidence from an Actions run, not from a laptop."
     },
     {
       "_disabled": true,
