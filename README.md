@@ -36,7 +36,7 @@ client. A link to a collapsed section opens it.
 ## How it works
 
 ```
-GitHub Actions (13:00 UTC daily)
+GitHub Actions (10:00 UTC daily)
   └─ scripts/main.py
        ├─ fetcher.py          RSS/Atom fetch, per-source caps, date cutoff, wire-feed org filter
        ├─ db.py               Neon Postgres: digest_runs (output) + seen_links (cross-run dedup)

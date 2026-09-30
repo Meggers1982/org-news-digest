@@ -2,8 +2,8 @@ name: Daily News Digest
 
 on:
   schedule:
-    # 13:00 UTC (~8am Central), every day
-    - cron: "0 13 * * *"
+    # 10:00 UTC (5am CDT, 4am CST), every day
+    - cron: "0 10 * * *"
 
   # Allow manual runs from the GitHub Actions UI
   workflow_dispatch:
