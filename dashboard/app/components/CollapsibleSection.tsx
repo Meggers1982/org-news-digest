@@ -22,6 +22,13 @@ function readCollapsed(): Set<string> {
   }
 }
 
+/** Fired by CollapseAllButton; every section in the group obeys it. */
+export const SET_COLLAPSED_EVENT = "digest:set-collapsed";
+/** Fired by a section after it changes, so the button can relabel itself. */
+export const SECTION_CHANGED_EVENT = "digest:section-changed";
+
+export type SetCollapsedDetail = { group: string; collapsed: boolean };
+
 function persist(set: Set<string>) {
   try {
     localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...set]));
@@ -44,10 +51,15 @@ function persist(set: Set<string>) {
 export default function CollapsibleSection({
   id,
   title,
+  group,
+  extraClass,
   children,
 }: {
   id: string;
   title: string;
+  /** Sections sharing a group answer to one Collapse all button. */
+  group: string;
+  extraClass?: string;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -66,19 +78,40 @@ export default function CollapsibleSection({
     return () => window.removeEventListener("hashchange", onHash);
   }, [id]);
 
-  const toggle = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
+  const setAndPersist = useCallback(
+    (next: boolean) => {
+      setCollapsed(next);
       const set = readCollapsed();
       if (next) set.add(kindOf(id));
       else set.delete(kindOf(id));
       persist(set);
-      return next;
-    });
-  }, [id]);
+    },
+    [id],
+  );
+
+  useEffect(() => {
+    const onSetAll = (e: Event) => {
+      const detail = (e as CustomEvent<SetCollapsedDetail>).detail;
+      if (detail.group === group) setAndPersist(detail.collapsed);
+    };
+    window.addEventListener(SET_COLLAPSED_EVENT, onSetAll);
+    return () => window.removeEventListener(SET_COLLAPSED_EVENT, onSetAll);
+  }, [group, setAndPersist]);
+
+  // Announced after the class has landed in the DOM, which is what the
+  // Collapse all button reads to pick its label.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(SECTION_CHANGED_EVENT, { detail: { group } }));
+  }, [collapsed, group]);
+
+  const toggle = useCallback(() => setAndPersist(!collapsed), [collapsed, setAndPersist]);
 
   return (
-    <section className={`section-block${collapsed ? " collapsed" : ""}`} id={id}>
+    <section
+      className={`section-block${extraClass ? ` ${extraClass}` : ""}${collapsed ? " collapsed" : ""}`}
+      id={id}
+      data-group={group}
+    >
       <h4>
         <button
           type="button"

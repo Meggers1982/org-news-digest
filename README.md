@@ -10,28 +10,42 @@ Postgres, and serves them from a small web dashboard. There is no email.
 - **`press`** — general consumer/lifestyle press-release highlights from Business
   Wire and PR Newswire, filtered by `preferences/press_preferences.md`.
 
-## Dashboard palette
+## Dashboard layout
 
-The color tokens in `dashboard/app/dashboard.css` are shared with
-`senior-research-digest` and `agingwire-research-intelligence` so the three
-dashboards read as one family. Change them in all three or in none.
+The dashboard follows `senior-research-digest`'s layout, so all the digest
+dashboards read as one product: its color tokens, type scale, sidebar, stat
+tiles, chip jump links and collapsible section blocks. Class names in
+`dashboard/app/dashboard.css` match its `docs/index.html` wherever the element
+is the same thing, so the two stay diffable. Change the tokens everywhere or
+nowhere.
 
-The theme toggle writes `data-theme` to the root element and remembers the
-choice in `localStorage` under `digest-theme`. An inline script in
-`app/layout.tsx` applies the stored value before first paint — without it a
-stored dark preference flashes light on every load. The button label is static
-("Theme") rather than reflecting the current theme, because the theme is only
-knowable on the client and a differing label would be a hydration mismatch.
+A day opens on a header with the date, an **Export .csv** button and four stat
+tiles (press items, org items, sources monitored, digest runs). Each run below
+it (Press Highlights, then Org Watch) has its own **Export .docx**, **Archive**
+and **Delete**, a row of jump chips, a **Collapse all** pill, and its sections
+in the reference's order: Feature Pitch first, then Story Spotlight, Story
+Ideas, Trends, and the digest body last. The pitch is what the page is for, and
+it used to sit below every item of the day.
 
-A back-to-top button appears after 240px of scroll, matching the other two.
+The theme toggle has three states, like the reference: **Auto** follows the OS
+(and keeps following it while the page is open), **Light** and **Dark** pin it.
+The choice is stored in `localStorage` under `digest-theme`, and an inline
+script in `app/layout.tsx` resolves it to `data-theme` before first paint, so a
+stored dark preference never flashes light. The label is read with
+`useSyncExternalStore`, whose server snapshot is Auto, so the server and client
+render agree and the stored label appears after hydration.
 
-Each digest section collapses from its heading, with the collapsed set stored in
-`localStorage` under `digest-collapsed`. `CollapsibleSection` is a thin client
-wrapper: the markdown inside it is still rendered on the server and passed
-through as children, which is why `DigestSection` stays a server component and
-react-markdown stays out of the browser bundle. It renders expanded on the
-server and corrects in an effect, since the stored state is only readable on the
-client. A link to a collapsed section opens it.
+A back-to-top button appears after 240px of scroll.
+
+Each section collapses from its heading, with the collapsed set stored in
+`localStorage` under `digest-collapsed` by kind (keep Trends shut on every day,
+not just one run). **Collapse all** applies to one run's sections only.
+`CollapsibleSection` is a thin client wrapper: the markdown inside it is still
+rendered on the server and passed through as children, which is why
+`DigestSection` stays a server component and react-markdown stays out of the
+browser bundle. It renders expanded on the server and corrects in an effect,
+since the stored state is only readable on the client (MEA-53: that correction
+is visible as a flash). A link to a collapsed section opens it.
 
 ## How it works
 

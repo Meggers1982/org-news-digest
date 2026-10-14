@@ -6,8 +6,13 @@
  * were one family. Those two now carry byte-identical token blocks, so this is
  * a copy of theirs -- change it in all three or in none, and mean it.
  *
- * The --band-* and --tone-* families are theirs and are kept here so the three
- * files stay diffable; nothing on this dashboard scores or tracks status yet.
+ * The --tone-* family is theirs and is kept here so the files stay diffable;
+ * nothing on this dashboard scores or tracks status yet.
+ *
+ * Everything below the tokens follows senior-research-digest's docs/index.html
+ * recipe (header, sidebar, stat tiles, jump chips, section blocks) so the
+ * dashboards read as one product. Class names match it where the element is
+ * the same thing, which keeps the two diffable.
  */
 :root {
   --bg: #f7f6f3;
@@ -25,6 +30,12 @@
   --good: #047857;
   --warn: #b45309;
   --bad: #be123c;
+  --strong: #1c1b18;
+
+  /* Measured from senior-research-digest's header; the sidebar sticks below it. */
+  --header-h: 62px;
+  /* The reading measure the other dashboards cap their content at. */
+  --measure: 56rem;
 
   --tone-info-bd: #7dd3fc; --tone-info-bg: #f0f9ff; --tone-info-ink: #0c4a6e;
   --tone-warn-bd: #fcd34d; --tone-warn-bg: #fffbeb; --tone-warn-ink: #78350f;
@@ -51,6 +62,7 @@
     --good: #34d399;
     --warn: #fbbf24;
     --bad: #fb7185;
+    --strong: #ffffff;
   }
 }
 
@@ -69,6 +81,7 @@
   --good: #34d399;
   --warn: #fbbf24;
   --bad: #fb7185;
+  --strong: #ffffff;
 }
 
 :root[data-theme="light"] {
@@ -84,334 +97,252 @@
   --good: #047857;
   --warn: #b45309;
   --bad: #be123c;
+  --strong: #1c1b18;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans), "Source Sans 3", ui-sans-serif, system-ui,
     -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
 }
+a { color: var(--accent); text-underline-offset: 2px; }
 
+/* ---------- header ---------- */
 .app-header {
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  padding: 0.625rem 1rem; border-bottom: 1px solid var(--border);
+  background: var(--panel); position: sticky; top: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  min-height: var(--header-h);
+}
+@supports (backdrop-filter: blur(8px)) {
+  .app-header {
+    background: color-mix(in srgb, var(--panel) 95%, transparent);
+    backdrop-filter: blur(8px);
+  }
+}
+.app-header h1 { margin: 0; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.025em; }
+.app-header h1 a { color: inherit; text-decoration: none; }
+.app-header h1 a:hover { color: var(--accent); }
+.app-header p { margin: 2px 0 0; color: var(--faint); font-size: 0.8125rem; line-height: 1.35; }
+
+/* ---------- controls ---------- */
+input[type="search"] {
+  width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+  border-radius: 0.5rem; background: var(--panel); color: var(--text);
+  font-family: inherit; font-size: 0.95rem;
+}
+input[type="search"]::placeholder { color: var(--faint); }
+input[type="search"]:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.export-btn, .theme-toggle {
+  display: inline-block;
+  background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 0.5rem; padding: 0.4rem 0.75rem; cursor: pointer;
+  font-family: inherit; font-size: 0.8125rem; line-height: 1.5; white-space: nowrap;
+  text-decoration: none;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.export-btn:hover, .theme-toggle:hover { color: var(--text); border-color: var(--faint); }
+.export-btn:disabled { opacity: 0.5; cursor: default; }
+.export-btn-danger { color: var(--bad); }
+.export-btn-danger:hover { color: var(--bad); border-color: var(--bad); }
+.btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+/* ---------- layout ---------- */
+/* body is a Tailwind flex column, and a flex item will not shrink below its
+   content without min-width: 0 -- which on a phone pushed the whole page past
+   the viewport. minmax(0, 1fr) does the same job for the grid track. */
+.layout { display: grid; grid-template-columns: 288px minmax(0, 1fr); align-items: start; width: 100%; min-width: 0; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.sidebar {
+  border-right: 1px solid var(--border); padding: 1rem;
+  max-height: calc(100vh - var(--header-h)); overflow-y: auto;
+  position: sticky; top: var(--header-h);
+}
+@media (max-width: 900px) {
+  .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+  .sidebar .run-list { max-height: 45vh; overflow-y: auto; }
+}
+.controls { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.875rem; }
+/* Sits where senior-research-digest's topic-demand link sits, in the same dress. */
+.archived-toggle {
+  display: block; padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border); border-radius: 0.5rem; background: var(--panel);
+  color: var(--accent); font-size: 0.8125rem; text-decoration: none;
+}
+.archived-toggle:hover { border-color: var(--accent); }
+.run-count { color: var(--faint); font-size: 0.8125rem; margin-bottom: 0.5rem; }
+.run-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.run-card {
+  display: block; color: inherit; text-decoration: none;
+  border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.625rem 0.75rem;
+  cursor: pointer; background: var(--panel); box-shadow: var(--shadow);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.run-card:hover { border-color: var(--faint); }
+.run-card.active { border-color: var(--accent); background: var(--accent-soft); }
+.run-card .rc-title { font-weight: 600; font-size: 0.875rem; margin-bottom: 2px; letter-spacing: -0.01em; }
+.run-card .rc-meta { font-size: 0.75rem; color: var(--faint); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+main.content { padding: 1rem 1rem 5rem; min-width: 0; }
+main.content > * { max-width: var(--measure); margin-left: auto; margin-right: auto; }
+
+/* ---------- day header + stat tiles ---------- */
+.run-header { border-bottom: 1px solid var(--border); padding-bottom: 0.875rem; margin-bottom: 1rem; }
+.run-header-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.run-header h2 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; }
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0.5rem; margin: 0.875rem 0; }
+.stat {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem; box-shadow: var(--shadow);
+}
+.stat .n {
+  font-size: 1.5rem; font-weight: 600; line-height: 1.15; color: var(--accent);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.025em;
+}
+.stat .l { font-size: 0.75rem; color: var(--faint); }
+.stat.is-zero .n { color: var(--faint); }
+
+/* ---------- badges ---------- */
+.badge {
+  display: inline-block; font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid transparent;
 }
 
-/* Collapsible sections. The heading is the control: a real <button> keeps
-   Enter/Space and focus order for free, and the h4 stays for document outline. */
-.section-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  background: none;
-  border: 0;
-  padding: 8px 12px 10px;
-  margin: 0 0 -4px;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  text-align: left;
-  transition: background 0.15s, color 0.15s;
+/* ---------- jump links ---------- */
+.jump-links { display: flex; gap: 0.375rem; flex-wrap: wrap; margin-top: 0.75rem; align-items: center; }
+.jump-link {
+  font-size: 0.8125rem; padding: 0.3rem 0.7rem; border: 1px solid var(--border);
+  border-radius: 999px; color: var(--muted); text-decoration: none; background: var(--panel);
+  transition: color 120ms ease, border-color 120ms ease;
 }
-.section-toggle:hover { color: var(--accent); background: var(--accent-soft); }
-.section-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* A 0.7rem caret in the heading color read as punctuation, not a control. */
+.jump-link:hover { border-color: var(--faint); color: var(--text); }
+.toggle-all {
+  font-family: inherit; font-size: 0.8125rem; font-weight: 500; padding: 0.3rem 0.7rem;
+  cursor: pointer; border: 1px solid var(--accent); border-radius: 999px;
+  color: var(--accent-ink); background: var(--accent); transition: opacity 120ms ease;
+}
+.toggle-all:hover { opacity: 0.9; }
+
+/* ---------- one digest run (press or org) ---------- */
+.run-block {
+  margin-bottom: 2rem;
+  scroll-margin-top: calc(var(--header-h) + 12px);
+}
+.run-block + .run-block { border-top: 1px solid var(--border); padding-top: 1.25rem; }
+.run-block-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.run-block h3 { margin: 0; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+.run-block-meta { font-size: 0.8125rem; color: var(--faint); }
+.ds-time { margin-left: 0.5rem; font-size: 0.8125rem; font-weight: 400; color: var(--faint); }
+.ds-archived-badge { margin-left: 0.5rem; vertical-align: 2px; }
+.run-block.archived .section-block { opacity: 0.75; border-style: dashed; }
+.ds-error { color: var(--bad); font-size: 0.8125rem; }
+
+/* ---------- sections ---------- */
+.section-block {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 0.5rem;
+  padding: 0.875rem; margin: 0.75rem auto; box-shadow: var(--shadow);
+  scroll-margin-top: calc(var(--header-h) + 12px);
+}
+.section-block h4 {
+  margin: 0 0 0.875rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text);
+  padding-bottom: 0.625rem; border-bottom: 1px solid var(--border);
+}
+/* The heading is the control. A real <button> keeps Enter/Space and focus
+   order for free; the h4 stays for document outline and screen readers. */
+.section-toggle {
+  display: flex; align-items: center; gap: 0.625rem; width: 100%;
+  background: none; border: 0; margin: 0 0 -4px; cursor: pointer;
+  padding: 0.375rem 0.5rem 0.5rem; border-radius: 0.375rem;
+  font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit;
+  text-align: left; transition: background 120ms ease, color 120ms ease;
+}
+.section-toggle:hover { color: var(--text); background: var(--bg); }
+/* Both of these were enlarged on purpose after the collapse control shipped
+   invisible; quieting them down to look tidier re-breaks a fixed bug. */
 .section-caret {
-  font-size: 1.45rem;
-  line-height: 1;
-  flex: none;
-  color: var(--accent);
-  transition: transform 0.18s ease;
+  font-size: 1.25rem; line-height: 1; flex: none; color: var(--accent);
+  transition: transform 180ms ease;
 }
 .section-hint {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px 10px;
-  opacity: 0.55;
-  transition: opacity 0.15s, border-color 0.15s;
+  margin-left: auto; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.025em;
+  color: var(--faint); border: 1px solid var(--border); border-radius: 999px;
+  padding: 0.125rem 0.5rem; opacity: 0.6;
+  transition: opacity 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.section-toggle:hover .section-hint,
-.section-toggle:focus-visible .section-hint { opacity: 1; border-color: var(--accent); }
+.section-toggle:hover .section-hint, .section-toggle:focus-visible .section-hint {
+  opacity: 1; color: var(--accent); border-color: var(--faint);
+}
 .section-block.collapsed .section-toggle { margin-bottom: 0; }
 .section-block.collapsed .section-caret { transform: rotate(-90deg); }
+.section-block.collapsed h4 { margin-bottom: 0; padding-bottom: 0; border-bottom-color: transparent; }
 .section-block.collapsed .section-body { display: none; }
-.section-block.collapsed h4 { margin-bottom: 0; }
 
-/* Same control as the other two digest dashboards. */
-.theme-toggle {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-.theme-toggle:hover { border-color: var(--accent); color: var(--text); }
-.app-header h1 { margin: 0 0 4px; font-size: 1.3rem; }
-.app-header p { margin: 0; color: var(--muted); font-size: 0.85rem; }
+/* The pitch is the point of the page; it should not look like a sibling. */
+.section-block.feature { border-left: 3px solid var(--accent); }
+.section-block.feature h4 { color: var(--accent); }
+.section-block.feature .markdown-body > p:first-of-type { font-size: 1.0625rem; line-height: 1.6; }
 
-.layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 0;
-  align-items: start;
+/* ---------- digest prose ---------- */
+.markdown-body { font-size: 0.95rem; line-height: 1.625; }
+.markdown-body p { margin: 0 0 0.625rem; }
+.markdown-body ul, .markdown-body ol { margin: 0 0 0.75rem; padding-left: 1.25rem; }
+.markdown-body ul { list-style: disc; }
+.markdown-body ol { list-style: decimal; }
+.markdown-body li { margin-bottom: 0.25rem; }
+.markdown-body :where(h1, h2, h3, h4) {
+  color: var(--text); font-weight: 600; letter-spacing: -0.01em;
+  margin: 1.125rem 0 0.375rem; line-height: 1.375;
 }
-@media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
-}
-
-.sidebar {
-  border-right: 1px solid var(--border);
-  padding: 16px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  position: sticky;
-  top: 80px;
-}
-@media (max-width: 860px) {
-  .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
-}
-
-.controls { margin-bottom: 14px; }
-.controls input[type="search"] {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--text);
-  font-size: 0.9rem;
-}
-.archived-toggle {
-  display: inline-block;
-  margin-top: 8px;
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-decoration: none;
-}
-.archived-toggle:hover { color: var(--accent); text-decoration: underline; }
-
-.run-list { display: flex; flex-direction: column; gap: 8px; }
-.run-card {
-  display: block;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  cursor: pointer;
-  background: var(--panel);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s;
-}
-.run-card:focus-visible,
-.controls input[type="search"]:focus-visible,
-.ds-download:focus-visible,
-#scroll-top-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.run-card:hover { border-color: var(--accent); }
-.run-card.active { border-color: var(--accent); background: var(--accent-soft); }
-.run-card .rc-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 3px; }
-.run-card .rc-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; }
-
-.badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--border);
-}
-
-.run-count { color: var(--muted); font-size: 0.78rem; margin-bottom: 8px; }
-
-main.content { padding: 24px 28px 60px; min-width: 0; }
-.empty-state { color: var(--muted); padding: 40px 0; text-align: center; }
-
-.run-header { margin-bottom: 20px; }
-.run-header h2 { margin: 0 0 8px; font-size: 1.4rem; }
-.run-header .meta-row { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 0.85rem; }
-
-.digest-section {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel);
-  padding: 16px 18px;
-  margin-bottom: 14px;
-}
-.digest-section .ds-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.digest-section h3 { margin: 0; font-size: 1.05rem; }
-.digest-section .ds-meta { font-size: 0.78rem; color: var(--muted); }
-.digest-section .ds-time {
-  margin-left: 8px;
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: var(--muted);
-}
-.digest-section .ds-actions {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.ds-download {
-  font-size: 0.75rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--accent-soft);
-  color: var(--accent);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.ds-download:hover { border-color: var(--accent); }
-
-.ds-jumplinks {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed var(--border);
-}
-.ds-jumplinks a {
-  color: var(--accent);
-  text-decoration: none;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  border: 1px solid var(--border);
-}
-.ds-jumplinks a:hover { border-color: var(--accent); text-decoration: underline; }
-
-.digest-section.archived { opacity: 0.7; border-style: dashed; }
-.ds-archived-badge {
-  margin-left: 8px;
-  font-size: 0.7rem;
-  font-weight: 400;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--border);
-}
-.ds-run-actions { display: flex; gap: 8px; }
-.ds-btn {
-  font: inherit;
-  font-size: 0.75rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  cursor: pointer;
-}
-.ds-btn:hover { border-color: var(--accent); }
-.ds-btn:disabled { opacity: 0.5; cursor: default; }
-.ds-btn-danger { color: var(--bad); }
-.ds-btn-danger:hover { border-color: var(--bad); }
-
-.section-block {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--accent-soft);
-  padding: 14px 16px;
-  margin-top: 14px;
-  /* Clears the sticky .app-header when a jump link scrolls a section into view. */
-  scroll-margin-top: 96px;
-}
-.section-block h4 { margin: 0 0 8px; font-size: 0.92rem; color: var(--accent); }
-.section-block .markdown-body { font-size: 0.85rem; }
-
-.markdown-body { font-size: 0.9rem; }
-.markdown-body :where(h1, h2, h3, h4) { color: var(--text); margin-top: 1.2em; margin-bottom: 0.4em; }
-.markdown-body :where(p, li) { color: var(--text); }
+.markdown-body h1 { font-size: 1.0625rem; }
+.markdown-body h2, .markdown-body h3 { font-size: 1rem; }
+.markdown-body h4 { font-size: 0.95rem; }
+.markdown-body > :first-child { margin-top: 0; }
 .markdown-body a { color: var(--accent); text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
-.markdown-body strong { color: var(--text); }
-.markdown-body ul, .markdown-body ol { padding-left: 1.2em; }
-.markdown-body hr { border-color: var(--border); }
+.markdown-body strong, .markdown-body b { color: var(--strong); font-weight: 600; }
+.markdown-body hr { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
 .markdown-body code { background: var(--accent-soft); padding: 1px 4px; border-radius: 4px; }
-
-#scroll-top-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 20;
+.markdown-body table { width: 100%; border-collapse: collapse; font-size: 0.875rem; display: block; overflow-x: auto; }
+.markdown-body th, .markdown-body td { text-align: left; padding: 0.4rem 0.625rem; border-bottom: 1px solid var(--border); }
+.markdown-body th {
+  color: var(--faint); font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.025em;
 }
-#scroll-top-btn:hover { border-color: var(--accent); }
 
-#scroll-top-btn {
-  position: fixed;
-  right: 22px;
-  bottom: 22px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 1.15rem;
-  line-height: 1;
-  opacity: 0;
-  visibility: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
-  transform: translateY(6px);
-  z-index: 20;
+/* ---------- states ---------- */
+.empty-state {
+  color: var(--muted); font-size: 0.95rem; text-align: center;
+  padding: 2.5rem 1rem; border: 1px dashed var(--border); border-radius: 0.5rem;
 }
-#scroll-top-btn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-#scroll-top-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- back to top ---------- */
+#scroll-top-btn {
+  position: fixed; right: 1.25rem; bottom: 1.25rem; width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--panel);
+  color: var(--muted); cursor: pointer; font-size: 1.05rem; line-height: 1;
+  opacity: 0; visibility: hidden; pointer-events: none; box-shadow: var(--shadow-lifted);
+  transition: opacity 200ms ease, visibility 200ms ease, transform 200ms ease,
+              color 120ms ease, border-color 120ms ease;
+  transform: translateY(0.5rem); z-index: 20;
+}
+#scroll-top-btn.visible { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+#scroll-top-btn:hover { border-color: var(--faint); color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
 
 /* Error and loading boundaries. Neither existed: a failed Neon read fell
    through to Next's generic screen with no way to tell "the database is down"
@@ -431,9 +362,4 @@ main.content { padding: 24px 28px 60px; min-width: 0; }
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.78rem;
   word-break: break-word;
-}
-.ds-error {
-  margin-left: 0.5rem;
-  color: var(--bad);
-  font-size: 0.78rem;
 }

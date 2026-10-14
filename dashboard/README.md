@@ -38,13 +38,20 @@ Pages are `force-dynamic` — Postgres is the source of truth and traffic is tin
 |---|---|
 | `/` | Dashboard. `?date=YYYY-MM-DD` selects a day, `?q=` searches content, `?archived=1` shows archived runs instead of active ones |
 | `/api/docx?id=<run id>` | Downloads that run as a Word document |
+| `/api/csv?date=YYYY-MM-DD` | Downloads the day's items as a spreadsheet, one row per item across both runs (`&archived=1` for the archived side) |
 | `/api/runs/<run id>` (PATCH) | Body `{ archived: boolean }` — archive/unarchive a run |
-| `/api/runs/<run id>` (DELETE) | Permanently deletes a run |
+| `/api/runs/<run id>` (DELETE) | Removes a run from every view. Recoverable: it stamps `deleted_at`, and clearing that brings the run back |
 
 `.docx` export runs server-side (`lib/markdownToDocx.ts` + `docx`), so the
 library stays off the client. It includes the run's `trends_raw`,
 `feature_pitch_raw`, `story_spotlight_raw`, and `item_pitches_raw` sections
 when present, matching what's shown on the page.
+
+The `.csv` export parses items out of the stored markdown (`lib/digestItems.ts`):
+press items are the `- **Headline** — summary [Source](url)` bullets under each
+`##` category, org items are the `###` entries up to the themes section. It
+relies on the formats the two generator prompts ask for, so if a prompt's entry
+format changes, the parser has to change with it.
 
 ## Local development
 

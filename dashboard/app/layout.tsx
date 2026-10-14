@@ -20,9 +20,13 @@ export const metadata: Metadata = {
 };
 
 /* Runs before first paint so a stored dark preference does not flash light.
-   Inlined rather than imported: a module would load after the first render. */
-const THEME_INIT = `(function(){try{var t=localStorage.getItem("digest-theme");
-if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t}}catch(e){}})();`;
+   Inlined rather than imported: a module would load after the first render.
+   The stored value is the choice (system, light or dark); this resolves it to
+   a concrete data-theme, the same way senior-research-digest's head script does. */
+const THEME_INIT = `(function(){var c="system";try{c=localStorage.getItem("digest-theme")||"system"}catch(e){}
+if(c!=="light"&&c!=="dark")c="system";
+var d=c==="dark"||(c==="system"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+var r=document.documentElement;r.dataset.theme=d?"dark":"light";r.dataset.themeChoice=c})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

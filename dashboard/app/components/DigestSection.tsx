@@ -1,22 +1,32 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { DigestRun } from "@/lib/db";
+import CollapseAllButton from "./CollapseAllButton";
 import CollapsibleSection from "./CollapsibleSection";
 import RunActions from "./RunActions";
 
-const LABELS: Record<DigestRun["digest_type"], string> = {
+export const LABELS: Record<DigestRun["digest_type"], string> = {
   press: "Press Highlights",
   org: "Org Watch",
 };
 
+function Markdown({ children }: { children: string }) {
+  return (
+    <div className="markdown-body">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+    </div>
+  );
+}
+
 /** Server component on purpose: the markdown never changes client-side, so
  *  rendering it here keeps react-markdown out of the browser bundle. Archive/
- *  delete need client interactivity, so that lives in the small RunActions
- *  island instead of here.
+ *  delete and collapse need client interactivity, so they live in small
+ *  islands instead of here.
  *
- *  Section ids are plain JSX attributes (these headings are hand-written here,
- *  not produced by react-markdown, so no rehype-slug is needed) and are keyed
- *  by run.id so multiple runs on one page never collide. */
+ *  Laid out like a run in senior-research-digest: the pitch first, then the
+ *  story ideas and trends, then the digest itself -- the pitch is the point of
+ *  the page and used to sit below every item of the day. Section ids are keyed
+ *  by run.id so two runs on one page never collide. */
 export default function DigestSection({
   run,
   showTime,
@@ -24,71 +34,51 @@ export default function DigestSection({
   run: DigestRun;
   showTime: boolean;
 }) {
-  const trendsId = `trends-${run.id}`;
-  const featurePitchId = `feature-pitch-${run.id}`;
-  const storySpotlightId = `story-spotlight-${run.id}`;
-  const itemPitchesId = `item-pitches-${run.id}`;
+  const group = `run-${run.id}`;
+  const sections = [
+    { id: `feature-pitch-${run.id}`, chip: "Feature Pitch", title: "Bigger Picture: Feature Pitch",
+      body: run.feature_pitch_raw, extraClass: "feature" },
+    { id: `story-spotlight-${run.id}`, chip: "Story Spotlight", title: "Story Spotlight",
+      body: run.story_spotlight_raw },
+    { id: `item-pitches-${run.id}`, chip: "Story Ideas", title: "Story Ideas by Item",
+      body: run.item_pitches_raw },
+    { id: `trends-${run.id}`, chip: "Trends", title: "Trends & Continuity", body: run.trends_raw },
+    { id: `items-${run.id}`, chip: "Digest", title: LABELS[run.digest_type], body: run.markdown },
+  ].filter((s): s is typeof s & { body: string } => Boolean(s.body));
 
   return (
-    <section className={`digest-section${run.archived_at ? " archived" : ""}`}>
-      <div className="ds-header">
-        <h3>
-          {LABELS[run.digest_type]}
-          {showTime && <span className="ds-time">{run.run_time}</span>}
-          {run.archived_at && <span className="ds-archived-badge">Archived</span>}
-        </h3>
-        <div className="ds-actions">
-          <span className="ds-meta">
+    <section className={`run-block${run.archived_at ? " archived" : ""}`} id={group}>
+      <div className="run-block-head">
+        <div>
+          <h3>
+            {LABELS[run.digest_type]}
+            {showTime && <span className="ds-time">{run.run_time}</span>}
+            {run.archived_at && <span className="badge ds-archived-badge">Archived</span>}
+          </h3>
+          <div className="run-block-meta">
             {run.item_count} items fetched &middot; {run.source_count} sources
-          </span>
-          <a className="ds-download" href={`/api/docx?id=${run.id}`}>
-            Download .docx
+          </div>
+        </div>
+        <div className="btn-row">
+          <a className="export-btn" href={`/api/docx?id=${run.id}`}>
+            Export .docx
           </a>
           <RunActions id={run.id} archived={Boolean(run.archived_at)} />
         </div>
       </div>
-      {/* Trends renders as its own collapsible section but was the one optional
-          section with no way to jump to it. */}
-      {(run.trends_raw || run.feature_pitch_raw || run.story_spotlight_raw || run.item_pitches_raw) && (
-        <nav className="ds-jumplinks" aria-label="Jump to section">
-          <span>Jump to:</span>
-          {run.feature_pitch_raw && <a href={`#${featurePitchId}`}>Feature Pitch</a>}
-          {run.story_spotlight_raw && <a href={`#${storySpotlightId}`}>Story Spotlight</a>}
-          {run.item_pitches_raw && <a href={`#${itemPitchesId}`}>Story Ideas</a>}
-          {run.trends_raw && <a href={`#${trendsId}`}>Trends</a>}
-        </nav>
-      )}
-      <div className="markdown-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.markdown}</ReactMarkdown>
-      </div>
-      {run.trends_raw && (
-        <CollapsibleSection id={trendsId} title="Trends & Continuity">
-          <div className="markdown-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.trends_raw}</ReactMarkdown>
-          </div>
+      <nav className="jump-links" aria-label={`Jump to a section of ${LABELS[run.digest_type]}`}>
+        {sections.map((s) => (
+          <a key={s.id} className="jump-link" href={`#${s.id}`}>
+            {s.chip} &darr;
+          </a>
+        ))}
+        <CollapseAllButton group={group} />
+      </nav>
+      {sections.map((s) => (
+        <CollapsibleSection key={s.id} id={s.id} title={s.title} group={group} extraClass={s.extraClass}>
+          <Markdown>{s.body}</Markdown>
         </CollapsibleSection>
-      )}
-      {run.feature_pitch_raw && (
-        <CollapsibleSection id={featurePitchId} title="Bigger Picture: Feature Pitch">
-          <div className="markdown-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.feature_pitch_raw}</ReactMarkdown>
-          </div>
-        </CollapsibleSection>
-      )}
-      {run.story_spotlight_raw && (
-        <CollapsibleSection id={storySpotlightId} title="Story Spotlight">
-          <div className="markdown-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.story_spotlight_raw}</ReactMarkdown>
-          </div>
-        </CollapsibleSection>
-      )}
-      {run.item_pitches_raw && (
-        <CollapsibleSection id={itemPitchesId} title="Story Ideas by Item">
-          <div className="markdown-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.item_pitches_raw}</ReactMarkdown>
-          </div>
-        </CollapsibleSection>
-      )}
+      ))}
     </section>
   );
 }

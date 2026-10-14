@@ -55,13 +55,13 @@ export default function RunActions({
   }
 
   return (
-    <div className="ds-run-actions">
-      <button type="button" className="ds-btn" disabled={busy} onClick={toggleArchive}>
+    <div className="btn-row">
+      <button type="button" className="export-btn" disabled={busy} onClick={toggleArchive}>
         {archived ? "Unarchive" : "Archive"}
       </button>
       <button
         type="button"
-        className="ds-btn ds-btn-danger"
+        className="export-btn export-btn-danger"
         disabled={busy}
         onClick={deleteRun}
       >

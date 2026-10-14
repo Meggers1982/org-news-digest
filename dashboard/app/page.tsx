@@ -1,7 +1,7 @@
 import { getDateIndex, getRunsForDate, type DigestRun } from "@/lib/db";
 import { usDate } from "@/lib/dates";
 import Dashboard from "./components/Dashboard";
-import DigestSection from "./components/DigestSection";
+import DigestSection, { LABELS } from "./components/DigestSection";
 import ScrollTopButton from "./components/ScrollTopButton";
 import ThemeToggle from "./components/ThemeToggle";
 
@@ -18,6 +18,29 @@ function orderRuns(runs: DigestRun[]): DigestRun[] {
     if (a.digest_type === b.digest_type) return 0;
     return a.digest_type === "press" ? -1 : 1;
   });
+}
+
+/** Same tile as senior-research-digest's stat row; a zero greys out rather
+ *  than shouting in the accent color. */
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <div className={`stat${n === 0 ? " is-zero" : ""}`}>
+      <div className="n">{n}</div>
+      <div className="l">{label}</div>
+    </div>
+  );
+}
+
+/** Sources are counted per run; a feed that fed both digests counts once per
+ *  digest, which is what "monitored" meant on each run card already. */
+function sourceCount(runs: DigestRun[]): number {
+  return runs.reduce((total, r) => total + r.source_count, 0);
+}
+
+function csvHref(date: string, archived: boolean): string {
+  const params = new URLSearchParams({ date });
+  if (archived) params.set("archived", "1");
+  return `/api/csv?${params.toString()}`;
 }
 
 export default async function Home({ searchParams }: PageProps<"/">) {
@@ -47,21 +70,33 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {activeDate ? (
           <>
             <div className="run-header">
-              <h2>{usDate(activeDate)}</h2>
-              <div className="meta-row">
-                <span>
-                  Press:{" "}
-                  {summary && summary.press_runs > 0
-                    ? `${summary.press_items} items across ${summary.press_runs} run${summary.press_runs > 1 ? "s" : ""}`
-                    : "—"}
-                </span>
-                <span>
-                  Org:{" "}
-                  {summary && summary.org_runs > 0
-                    ? `${summary.org_items} items across ${summary.org_runs} run${summary.org_runs > 1 ? "s" : ""}`
-                    : "—"}
-                </span>
+              <div className="run-header-top">
+                <h2>News Digest — {usDate(activeDate)}</h2>
+                <div className="btn-row">
+                  <a className="export-btn" href={csvHref(activeDate, showArchived)}>
+                    Export .csv
+                  </a>
+                </div>
               </div>
+              <div className="stat-row">
+                <Stat n={summary?.press_items ?? 0} label="press items fetched" />
+                <Stat n={summary?.org_items ?? 0} label="org items fetched" />
+                <Stat n={sourceCount(runs)} label="sources monitored" />
+                <Stat n={runs.length} label={runs.length === 1 ? "digest run" : "digest runs"} />
+              </div>
+              {runs.length > 1 && (
+                <nav className="jump-links" aria-label="Jump to a digest">
+                  {runs.map((run) => (
+                    <a key={run.id} className="jump-link" href={`#run-${run.id}`}>
+                      {LABELS[run.digest_type]}
+                      {runs.filter((r) => r.digest_type === run.digest_type).length > 1
+                        ? ` · ${run.run_time}`
+                        : ""}{" "}
+                      &darr;
+                    </a>
+                  ))}
+                </nav>
+              )}
             </div>
             {runs.map((run) => (
               <DigestSection
