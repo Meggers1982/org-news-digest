@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 
-const COLLAPSE_KEY = "digest-collapsed";
+/* layout.tsx's pre-paint script reads this key too -- keep the two in step. */
+export const COLLAPSE_KEY = "digest-collapsed";
 
 /* Section ids carry the run they belong to (trends-41), so the stored set grew
    by one entry per section per run forever, and collapsing Trends on one date
@@ -13,14 +14,31 @@ function kindOf(id: string): string {
   return id.replace(/-\d+$/, "");
 }
 
-function readCollapsed(): Set<string> {
+/** The raw stored string, so useSyncExternalStore compares by value. */
+function readRaw(): string {
   try {
-    const raw = localStorage.getItem(COLLAPSE_KEY);
-    return new Set<string>(raw ? JSON.parse(raw) : []);
+    return localStorage.getItem(COLLAPSE_KEY) ?? "[]";
+  } catch {
+    return "[]";
+  }
+}
+
+function parse(raw: string): Set<string> {
+  try {
+    const kinds: unknown = JSON.parse(raw);
+    return new Set<string>(Array.isArray(kinds) ? kinds : []);
   } catch {
     return new Set<string>();
   }
 }
+
+function readCollapsed(): Set<string> {
+  return parse(readRaw());
+}
+
+/* Nothing outside this file writes the key while the page is open, and a
+   section reads it on its own renders, so there is nothing to subscribe to. */
+const subscribeNever = () => () => {};
 
 /** Fired by CollapseAllButton; every section in the group obeys it. */
 export const SET_COLLAPSED_EVENT = "digest:set-collapsed";
@@ -44,9 +62,16 @@ function persist(set: Set<string>) {
  * stays out of the browser bundle — the reason DigestSection is a server
  * component in the first place.
  *
- * Always renders expanded on the server and corrects in an effect: the stored
- * state lives in localStorage, so rendering it directly would be a hydration
- * mismatch.
+ * The stored state lives in localStorage, which the server cannot read, so
+ * the server renders every section expanded. Two things keep that from showing
+ * (MEA-53 -- it used to flash open on every load, then snap shut in an effect):
+ *
+ * - Before first paint, the inline script in layout.tsx copies the stored kinds
+ *   onto <html data-collapsed>, and dashboard.css hides those sections while
+ *   they lack data-ready. Same pattern as the theme.
+ * - On the client, useSyncExternalStore reads the stored set during render with
+ *   a server snapshot of null, so hydration matches the server HTML and the
+ *   very next render carries the real state and sets data-ready. No effect.
  */
 export default function CollapsibleSection({
   id,
@@ -62,17 +87,21 @@ export default function CollapsibleSection({
   extraClass?: string;
   children: ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    // A link straight to this section must open it, or the jump looks broken.
-    if (window.location.hash === `#${id}`) return;
-    setCollapsed(readCollapsed().has(kindOf(id)));
-  }, [id]);
+  const kind = kindOf(id);
+  const stored = useSyncExternalStore(subscribeNever, readRaw, () => null);
+  // Set once this section is clicked, collapsed-all, or jumped to; until then
+  // it follows the stored preference.
+  const [override, setOverride] = useState<boolean | null>(null);
+  const ready = stored !== null;
+  // A link straight to this section must open it, or the jump looks broken.
+  // (`ready` means this is a client render, so window exists.)
+  const storedCollapsed =
+    ready && parse(stored).has(kind) && window.location.hash !== `#${id}`;
+  const collapsed = override ?? storedCollapsed;
 
   useEffect(() => {
     const onHash = () => {
-      if (window.location.hash === `#${id}`) setCollapsed(false);
+      if (window.location.hash === `#${id}`) setOverride(false);
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -80,13 +109,13 @@ export default function CollapsibleSection({
 
   const setAndPersist = useCallback(
     (next: boolean) => {
-      setCollapsed(next);
+      setOverride(next);
       const set = readCollapsed();
-      if (next) set.add(kindOf(id));
-      else set.delete(kindOf(id));
+      if (next) set.add(kind);
+      else set.delete(kind);
       persist(set);
     },
-    [id],
+    [kind, setOverride],
   );
 
   useEffect(() => {
@@ -111,6 +140,8 @@ export default function CollapsibleSection({
       className={`section-block${extraClass ? ` ${extraClass}` : ""}${collapsed ? " collapsed" : ""}`}
       id={id}
       data-group={group}
+      data-kind={kind}
+      data-ready={ready ? "" : undefined}
     >
       <h4>
         <button
@@ -124,7 +155,8 @@ export default function CollapsibleSection({
             &#9662;
           </span>
           {title}
-          <span className="section-hint">{collapsed ? "SHOW" : "HIDE"}</span>
+          {/* The word comes from CSS so the pre-paint rule can flip it too. */}
+          <span className="section-hint" aria-hidden="true" />
         </button>
       </h4>
       <div className="section-body" id={`${id}-body`}>

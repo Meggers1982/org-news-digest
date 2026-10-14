@@ -43,9 +43,11 @@ not just one run). **Collapse all** applies to one run's sections only.
 `CollapsibleSection` is a thin client wrapper: the markdown inside it is still
 rendered on the server and passed through as children, which is why
 `DigestSection` stays a server component and react-markdown stays out of the
-browser bundle. It renders expanded on the server and corrects in an effect,
-since the stored state is only readable on the client (MEA-53: that correction
-is visible as a flash). A link to a collapsed section opens it.
+browser bundle. The server cannot read the stored state, so it renders every
+section expanded; the inline script in `app/layout.tsx` copies the stored kinds
+onto `<html data-collapsed>` before first paint and CSS hides those sections
+until React takes over, so nothing flashes open on load (MEA-53). A link to a
+collapsed section opens it.
 
 ## How it works
 

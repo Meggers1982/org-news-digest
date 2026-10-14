@@ -22,11 +22,14 @@ export const metadata: Metadata = {
 /* Runs before first paint so a stored dark preference does not flash light.
    Inlined rather than imported: a module would load after the first render.
    The stored value is the choice (system, light or dark); this resolves it to
-   a concrete data-theme, the same way senior-research-digest's head script does. */
+   a concrete data-theme, the same way senior-research-digest's head script does.
+   It also copies the collapsed section kinds onto data-collapsed, so
+   dashboard.css can hide those sections before React runs (MEA-53). */
 const THEME_INIT = `(function(){var c="system";try{c=localStorage.getItem("digest-theme")||"system"}catch(e){}
 if(c!=="light"&&c!=="dark")c="system";
 var d=c==="dark"||(c==="system"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
-var r=document.documentElement;r.dataset.theme=d?"dark":"light";r.dataset.themeChoice=c})();`;
+var r=document.documentElement;r.dataset.theme=d?"dark":"light";r.dataset.themeChoice=c;
+try{var k=JSON.parse(localStorage.getItem("digest-collapsed")||"[]");if(Array.isArray(k))r.dataset.collapsed=k.join(" ")}catch(e){}})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

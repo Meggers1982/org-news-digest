@@ -283,10 +283,43 @@ main.content > * { max-width: var(--measure); margin-left: auto; margin-right: a
 .section-toggle:hover .section-hint, .section-toggle:focus-visible .section-hint {
   opacity: 1; color: var(--accent); border-color: var(--faint);
 }
+.section-hint::after { content: "HIDE"; }
+.section-block.collapsed .section-hint::after { content: "SHOW"; }
 .section-block.collapsed .section-toggle { margin-bottom: 0; }
 .section-block.collapsed .section-caret { transform: rotate(-90deg); }
 .section-block.collapsed h4 { margin-bottom: 0; padding-bottom: 0; border-bottom-color: transparent; }
 .section-block.collapsed .section-body { display: none; }
+
+/* The same collapsed look before React has run (MEA-53). layout.tsx's
+   pre-paint script copies the stored kinds onto <html data-collapsed>; a
+   section stops answering to it once it renders data-ready on the client.
+   :target keeps a section linked to directly open, as the component does.
+   One line per kind -- add a kind in DigestSection, add it here too. */
+html[data-collapsed~="feature-pitch"] .section-block[data-kind="feature-pitch"]:not([data-ready]):not(:target) .section-hint::after,
+html[data-collapsed~="story-spotlight"] .section-block[data-kind="story-spotlight"]:not([data-ready]):not(:target) .section-hint::after,
+html[data-collapsed~="item-pitches"] .section-block[data-kind="item-pitches"]:not([data-ready]):not(:target) .section-hint::after,
+html[data-collapsed~="trends"] .section-block[data-kind="trends"]:not([data-ready]):not(:target) .section-hint::after,
+html[data-collapsed~="items"] .section-block[data-kind="items"]:not([data-ready]):not(:target) .section-hint::after { content: "SHOW"; }
+html[data-collapsed~="feature-pitch"] .section-block[data-kind="feature-pitch"]:not([data-ready]):not(:target) .section-toggle,
+html[data-collapsed~="story-spotlight"] .section-block[data-kind="story-spotlight"]:not([data-ready]):not(:target) .section-toggle,
+html[data-collapsed~="item-pitches"] .section-block[data-kind="item-pitches"]:not([data-ready]):not(:target) .section-toggle,
+html[data-collapsed~="trends"] .section-block[data-kind="trends"]:not([data-ready]):not(:target) .section-toggle,
+html[data-collapsed~="items"] .section-block[data-kind="items"]:not([data-ready]):not(:target) .section-toggle { margin-bottom: 0; }
+html[data-collapsed~="feature-pitch"] .section-block[data-kind="feature-pitch"]:not([data-ready]):not(:target) .section-caret,
+html[data-collapsed~="story-spotlight"] .section-block[data-kind="story-spotlight"]:not([data-ready]):not(:target) .section-caret,
+html[data-collapsed~="item-pitches"] .section-block[data-kind="item-pitches"]:not([data-ready]):not(:target) .section-caret,
+html[data-collapsed~="trends"] .section-block[data-kind="trends"]:not([data-ready]):not(:target) .section-caret,
+html[data-collapsed~="items"] .section-block[data-kind="items"]:not([data-ready]):not(:target) .section-caret { transform: rotate(-90deg); }
+html[data-collapsed~="feature-pitch"] .section-block[data-kind="feature-pitch"]:not([data-ready]):not(:target) h4,
+html[data-collapsed~="story-spotlight"] .section-block[data-kind="story-spotlight"]:not([data-ready]):not(:target) h4,
+html[data-collapsed~="item-pitches"] .section-block[data-kind="item-pitches"]:not([data-ready]):not(:target) h4,
+html[data-collapsed~="trends"] .section-block[data-kind="trends"]:not([data-ready]):not(:target) h4,
+html[data-collapsed~="items"] .section-block[data-kind="items"]:not([data-ready]):not(:target) h4 { margin-bottom: 0; padding-bottom: 0; border-bottom-color: transparent; }
+html[data-collapsed~="feature-pitch"] .section-block[data-kind="feature-pitch"]:not([data-ready]):not(:target) .section-body,
+html[data-collapsed~="story-spotlight"] .section-block[data-kind="story-spotlight"]:not([data-ready]):not(:target) .section-body,
+html[data-collapsed~="item-pitches"] .section-block[data-kind="item-pitches"]:not([data-ready]):not(:target) .section-body,
+html[data-collapsed~="trends"] .section-block[data-kind="trends"]:not([data-ready]):not(:target) .section-body,
+html[data-collapsed~="items"] .section-block[data-kind="items"]:not([data-ready]):not(:target) .section-body { display: none; }
 
 /* The pitch is the point of the page; it should not look like a sibling. */
 .section-block.feature { border-left: 3px solid var(--accent); }
